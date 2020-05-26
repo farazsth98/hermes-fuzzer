@@ -1,0 +1,80 @@
+%%% ## Author: Syed Faraz Abrar
+%%% ## Twitter: https://twitter.com/farazsth98
+%%% ## Description: Grammar for fuzzing JavaScript
+
+%%% ###########################################################################
+%%% ###########################################################################
+%%% ####### VALUE SECTION
+%%% ####### Only define values here
+%%% ####### Use and assign value in declarations as follows: +value+
+%%% ####### Use variables in statements as follows: !variable!.bar();
+%%% ###########################################################################
+%%% ###########################################################################
+
+%section% := value
+
+%%% ######## JSArrays ########
+%%% ## https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array ##
+
+%%%JSArrayCallbackMethod :=
+%%%	+every+
+%%%	+filter+
+%%%	+flatMap+
+%%%	+forEach+
+%%%	+map+
+%%%	+reduce+
+%%%	+reduceRight+
+%%%	+some+
+
+JSArrayInPlaceMethod :=
+	+concat+
+	+copyWithin+
+	+entries+
+	+fill+
+	+find+
+	+findIndex+
+	+flat+
+	+includes+
+	+indexOf+
+	+join+
+	+keys+
+	+lastIndexOf+
+	+pop+
+	+push+
+	+reverse+
+	+shift+
+	+slice+
+	+sort+
+	+splice+
+	+toLocaleString+
+	+toString+
+	+unshift+
+	+values+
+
+concat :=
+	concat()
+	concat(!arr!)
+
+%%% ###########################################################################
+%%% ###########################################################################
+%%% ####### VARIABLE SECTION
+%%% ####### Only assign variables in this section
+%%% ####### For example: @var@ = 42;
+%%% ###########################################################################
+%%% ###########################################################################
+
+%section% := variable
+
+%%% ######## JSArrays ########
+
+arr :=
+	try { var @arr@ = new Array(1, 2, 3, 4); } catch (e) {}
+
+%%% ###########################################################################
+%%% ###########################################################################
+%%% ####### VARIANCE SECTION
+%%% ###########################################################################
+%%% ###########################################################################
+
+main :=
+	try { +wrapper+ } catch(e) {}
