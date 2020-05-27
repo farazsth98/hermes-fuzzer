@@ -2,6 +2,12 @@
 %%% ## Twitter: https://twitter.com/farazsth98
 %%% ## Description: Grammar for fuzzing JavaScript
 
+%const% MAX_REPEAT_POWER := 6
+%const% VARIANCE_MIN := 100
+%const% VARIANCE_MAX := 200
+%const% VARIABLE_MIN := 10
+%const% VARIABLE_MAX := 20
+
 %%% ###########################################################################
 %%% ###########################################################################
 %%% ####### VALUE SECTION
@@ -13,47 +19,189 @@
 
 %section% := value
 
+%%% ######## Generic Values ########
+
+integers :=
+	%range%(-64-64)
+
+unsigned := 
+	%range%(0-64)
+
+floats :=
+	%range%(-64.0-64.0)
+
+strings :=
+	%range%(a-z)
+	%range%(A-Z)
+	%range%(0-9)
+	%repeat%(+strings+)
+
+others :=
+	+integers+
+	+floats+
+	"+strings+"
+	{}
+	[]
+	{'a':+integers+}
+	!str!
+	!obj!
+	!arr!
+
+unsafeSizes :=
+	255
+	65535
+	4294967295
+	256
+	65536
+	4294967296
+	127
+	32767
+	2147483647
+	9223372036854775807
+	128
+	32768
+	2147483648
+	9223372036854775808
+	-128
+	-32768
+	-2147483648
+	-9223372036854775808
+	-129
+	-32769
+	-2147483649
+	-9223372036854775809
+
+charCodes :=
+	0x%range%(0x0-0xff)
+	+charCodes+, +charCodes+
+
+twoIntArgs :=
+	%range%(0-64), %range%(0-64)
+
+threeIntArgs :=
+	%range%(0-64), %range%(0-64), %range%(0-64)
+	
+twoFloatArgs :=
+	%range%(0.0-64.0), %range%(0.0-64.0)
+
+threeFloatArgs :=
+	%range%(0.0-64.0), %range%(0.0-64.0), %range%(0.0-64.0)
+
+%%% ######## Generic Functions ########
+
+genericFuncArrayMap :=
+	function(cval, c_index, c_array) { c_array.+JSArrayInPlaceMethod+ }
+
 %%% ######## JSArrays ########
 %%% ## https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array ##
 
-%%%JSArrayCallbackMethod :=
+arrayMethods :=
+	+JSArrayCallbackMethod+
+	+JSArrayInPlaceMethod+
+
+%%% ######## Methods with callbacks ########
+
+JSArrayCallbackMethod :=
 %%%	+every+
 %%%	+filter+
+%%%	+find+
+%%%	+findIndex+
 %%%	+flatMap+
 %%%	+forEach+
-%%%	+map+
+	+map+
 %%%	+reduce+
 %%%	+reduceRight+
 %%%	+some+
+%%% +sort+
+
+map :=
+	map(+genericFuncArrayMap+);
+	map(async +genericFuncArrayMap+);
+	
+%%% ######## Methods that occur in-place ########
 
 JSArrayInPlaceMethod :=
 	+concat+
 	+copyWithin+
-	+entries+
+%%%	+entries+
 	+fill+
-	+find+
-	+findIndex+
 	+flat+
 	+includes+
 	+indexOf+
 	+join+
-	+keys+
+%%%	+keys+
 	+lastIndexOf+
 	+pop+
 	+push+
-	+reverse+
-	+shift+
-	+slice+
-	+sort+
-	+splice+
-	+toLocaleString+
-	+toString+
-	+unshift+
-	+values+
+%%%	+reverse+
+%%%	+shift+
+%%%	+slice+
+%%%	+splice+
+%%%	+toLocaleString+
+%%%	+toString+
+%%%	+unshift+
+%%%	+values+
 
 concat :=
-	concat()
-	concat(!arr!)
+	concat();
+	concat(!arr!);
+	concat(!obj!);
+
+copyWithin :=
+	copyWithin(+twoIntArgs+);
+	copyWithin(+threeIntArgs+);
+	copyWithin(+others+, +others+, +others+);
+
+flat :=
+	flat();
+	flat(+others+);
+
+%%%	entries :=
+
+fill :=
+	fill(+others+);
+	fill(+others+, +others+);
+	fill(+others+, +others+, +others+);
+	fill(+others+, +twoIntArgs+);
+	fill(+others+, +twoFloatArgs+);
+
+includes :=
+	includes(+others+);
+	includes(+others+, +others+);
+	includes(+others+, +integers+);
+
+indexOf :=
+	indexOf(+others+);
+	indexOf(+others+, +others+);
+	indexOf(+others+, +integers+);
+
+join :=
+	join();
+	join(+others+);
+
+%%%	keys :=
+
+lastIndexOf :=
+	lastIndexOf(+others+);
+	lastIndexOf(+others+, +others+);
+	lastIndexOf(+others+, +integers+);
+
+pop :=
+	pop();
+	pop(%repeat%(+others+, ", "));
+
+push :=
+	push();
+	push(%repeat%(+others+, ", "));
+
+%%% ######## Wrappers ########
+
+forLoops :=
+	for (var i = 0; i < +unsigned+; i++) { !arr!.+arrayMethods+ }
+	for (var i = 0; i < !arr!.length; i++) { !arr!.+arrayMethods+ }
+
+wrapper :=
+	!arr!.+arrayMethods+
 
 %%% ###########################################################################
 %%% ###########################################################################
@@ -65,10 +213,24 @@ concat :=
 
 %section% := variable
 
-%%% ######## JSArrays ########
+str :=
+	try { var @str@ = "+strings+"; } catch (e) {}
+	try { var @str@ = String.fromCharCode(+charCodes+); } catch (e) {}
+
+obj :=
+	try { var @obj@ = {}; } catch (e) {}
+	try { var @obj@ = Object.create(null); } catch (e) {}
+	try { var @obj@ = Object.create(!obj!); } catch (e) {}
+	try { var @obj@ = { ...!obj! }; } catch (e) {}
 
 arr :=
-	try { var @arr@ = new Array(1, 2, 3, 4); } catch (e) {}
+	try { var @arr@ = new Array(%repeat%(+integers+, ", ")); } catch (e) {}
+	try { var @arr@ = new Array(%repeat%(+floats+, ", ")); } catch (e) {}
+	try { var @arr@ = new Array(%repeat%(+others+, ", ")); } catch (e) {}
+	try { var @arr@ = new Array(+unsafeSizes+); } catch (e) {}
+	try { var @arr@ = Array.of(%repeat%(+integers+, ", ")); } catch (e) {}
+	try { var @arr@ = Array.of(%repeat%(+floats+, ", ")); } catch (e) {}
+	try { var @arr@ = Array.of(%repeat%(+others+, ", ")); } catch (e) {}
 
 %%% ###########################################################################
 %%% ###########################################################################
@@ -76,5 +238,8 @@ arr :=
 %%% ###########################################################################
 %%% ###########################################################################
 
+%section% := variance
+
 main :=
 	try { +wrapper+ } catch(e) {}
+	try { +forLoops+ } catch(e) {}
