@@ -4,7 +4,7 @@
 
 %const% MAX_REPEAT_POWER := 6
 %const% VARIANCE_MIN := 100
-%const% VARIANCE_MAX := 200
+%const% VARIANCE_MAX := 400
 %const% VARIABLE_MIN := 10
 %const% VARIABLE_MAX := 20
 
@@ -90,7 +90,16 @@ threeFloatArgs :=
 %%% ######## Generic Functions ########
 
 genericFuncArrayMap :=
-	function(cval, c_index, c_array) { c_array.+JSArrayInPlaceMethod+ }
+	function(c_val, c_index, c_array) { c_array.+JSArrayInPlaceMethod+ }
+
+genericFuncArraySort :=
+	+genericFuncArraySortNumeric+
+
+genericFuncArraySortNumeric :=
+	function(c_first, c_second) { c_first < c_second; }
+	function(c_first, c_second) { c_first <= c_second; }
+	function(c_first, c_second) { c_first >= c_second; }
+	function(c_first, c_second) { c_first > c_second; }
 
 %%% ######## JSArrays ########
 %%% ## https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array ##
@@ -112,11 +121,16 @@ JSArrayCallbackMethod :=
 %%%	+reduce+
 %%%	+reduceRight+
 %%%	+some+
-%%% +sort+
+	+sort+
 
 map :=
 	map(+genericFuncArrayMap+);
 	map(async +genericFuncArrayMap+);
+
+sort :=
+	sort();
+	sort(+genericFuncArraySort+);
+	sort(async +genericFuncArraySort+);
 	
 %%% ######## Methods that occur in-place ########
 
@@ -133,13 +147,13 @@ JSArrayInPlaceMethod :=
 	+lastIndexOf+
 	+pop+
 	+push+
-%%%	+reverse+
-%%%	+shift+
-%%%	+slice+
-%%%	+splice+
+	+reverse+
+	+shift+
+	+slice+
+	+splice+
 %%%	+toLocaleString+
-%%%	+toString+
-%%%	+unshift+
+	+toString+
+	+unshift+
 %%%	+values+
 
 concat :=
@@ -193,6 +207,36 @@ pop :=
 push :=
 	push();
 	push(%repeat%(+others+, ", "));
+
+reverse :=
+	reverse();
+	reverse(%repeat%(+others+, ", "));
+
+shift :=
+	shift();
+	shift(%repeat%(+others+, ", "));
+
+slice :=
+	slice();
+	slice(+integers+);
+	slice(+integers+, +integers+);
+	slice(+others+, +others+);
+
+splice :=
+	splice();
+	splice(+integers+);
+	splice(+integers+, +integers+);
+	splice(+integers+, +integers+, %repeat%(+others+, ", "));
+	splice(+others+, +others+, %repeat%(+others+, ", "));
+
+toString :=
+	toString();
+	toString(%repeat%(+others+, ", "));
+
+unshift :=
+	unshift();
+	unshift(%repeat%(+others+, ", "));
+	
 
 %%% ######## Wrappers ########
 
