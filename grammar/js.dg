@@ -5,8 +5,8 @@
 %const% MAX_REPEAT_POWER := 2
 %const% VARIANCE_MIN := 50
 %const% VARIANCE_MAX := 100
-%const% VARIABLE_MIN := 1
-%const% VARIABLE_MAX := 2
+%const% VARIABLE_MIN := 2
+%const% VARIABLE_MAX := 5
 
 %%% ###########################################################################
 %%% ###########################################################################
@@ -40,7 +40,7 @@ booleans :=
 	true
 	false
 
-others :=
+all :=
 	+integers+
 	+floats+
 	"+strings+"
@@ -51,6 +51,9 @@ others :=
 	!str!
 	!obj!
 	!arr!
+	+others+
+
+others :=
 	NaN
 	undefined
 	null
@@ -65,6 +68,9 @@ unsafeSizes :=
 charCodes :=
 	0x%range%(0x0-0xff)
 	+charCodes+, +charCodes+
+
+codePoints :=
+	%range%(0-999999)
 
 twoIntArgs :=
 	%range%(0-64), %range%(0-64)
@@ -168,47 +174,47 @@ copyWithin :=
 
 flat :=
 	flat()
-	flat(+others+)
+	flat(+all+)
 
 %%%	entries :=
 
 fill :=
-	fill(+others+)
-	fill(+others+, +twoIntArgs+)
+	fill(+all+)
+	fill(+all+, +twoIntArgs+)
 
 includes :=
-	includes(+others+)
-	includes(+others+, +unsigned+)
+	includes(+all+)
+	includes(+all+, +unsigned+)
 
 indexOf :=
-	indexOf(+others+)
-	indexOf(+others+, +unsigned+)
+	indexOf(+all+)
+	indexOf(+all+, +unsigned+)
 
 join :=
 	join()
-	join(+others+)
+	join(+all+)
 
 %%%	keys :=
 
 lastIndexOf :=
-	lastIndexOf(+others+)
-	lastIndexOf(+others+, +unsigned+)
+	lastIndexOf(+all+)
+	lastIndexOf(+all+, +unsigned+)
 
 pop :=
 	pop()
-	pop(%repeat%(+others+, ", "))
+	pop(%repeat%(+all+, ", "))
 
 push :=
 	push()
-	push(%repeat%(+others+, ", "))
+	push(%repeat%(+all+, ", "))
 
 reverse :=
 	reverse()
-	reverse(%repeat%(+others+, ", "))
+	reverse(%repeat%(+all+, ", "))
 
 shift :=
 	shift()
-	shift(%repeat%(+others+, ", "))
+	shift(%repeat%(+all+, ", "))
 
 slice :=
 	slice()
@@ -219,15 +225,15 @@ splice :=
 	splice()
 	splice(+unsigned+)
 	splice(+unsigned+, +unsigned+)
-	splice(+unsigned+, +unsigned+, %repeat%(+others+, ", "))
+	splice(+unsigned+, +unsigned+, %repeat%(+all+, ", "))
 
 toString :=
 	toString()
-	toString(%repeat%(+others+, ", "))
+	toString(%repeat%(+all+, ", "))
 
 unshift :=
 	unshift()
-	unshift(%repeat%(+others+, ", "))
+	unshift(%repeat%(+all+, ", "))
 	
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -235,6 +241,12 @@ unshift :=
 %%% ### https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
 %%% ##############################################################################################
 %%% ##############################################################################################
+
+DataViewSetArgs :=
+	+booleans+
+	+integers+
+	+floats+
+	+all+
 
 DataViewGetMethods :=
     getFloat32
@@ -258,9 +270,9 @@ DataViewSetMethods :=
 
 DataViewMethods :=
 	+DataViewGetMethods+(%range%(0-4), +booleans+)
-	+DataViewSetMethods+(%range%(0-4), +integers+)
-	+DataViewSetMethods+(%range%(0-4), +floats+)
-	+DataViewSetMethods+(%range%(0-4), +others+)
+	+DataViewGetMethods+(%range%(0-4), +booleans+)
+	+DataViewSetMethods+(%range%(0-4), +DataViewSetArgs+, +booleans+)
+	+DataViewSetMethods+(%range%(0-4), +DataViewSetArgs+, +others+)
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -268,24 +280,30 @@ DataViewMethods :=
 %%% ##############################################################################################
 %%% ##############################################################################################
 
+initializableObjects :=
+	!dv!
+	!obj!
+	+arrays+
+
 forLoopInit :=
-	for (var i = 0; i < !e_arr!.length; i++) { !e_arr![i] = +others+; }
-	for (var i = 0; i < !t_arr!.length; i++) { !t_arr![i] = +integers+; }
-	for (var i = 0; i < !t_arr!.length; i++) { !t_arr![i] = +floats+; }
-	for (var i = 0; i < !t_arr!.length; i++) { !t_arr![i] = +others+; }
+	for (var i = 0; i < +arrays+.length; i++) { +arrays+[i] = +all+; }
+	for (var i = 0; i < +unsigned+; i++) { +initializableObjects+[i] = +all+; }
 
 forLoops :=
-	for (var i = 0; i < +unsigned+; i++) { !arr!.+arrayMethods+; }
-	for (var i = 0; i < !arr!.length; i++) { !arr!.+arrayMethodsForLoop+; }
-	for (var i = 0; i < +unsigned+; i++) { !e_arr!.+arrayMethods+; }
-	for (var i = 0; i < !arr!.length; i++) { !e_arr!.+arrayMethodsForLoop+; }
+	for (var i = 0; i < +unsigned+; i++) { +arrays+.+arrayMethods+; }
+	for (var i = 0; i < +arrays+.length; i++) { +arrays+.+arrayMethodsForLoop+; }
 	+forLoopInit+
 
+arrays :=
+	!arr!
+	!e_arr!
+	!t_arr!
+
 wrapper :=
-	!arr!.+arrayMethods+;
-	!e_arr!.+arrayMethods+;
-	!t_arr!.+arrayMethods+;
+	+arrays+.+arrayMethods+;
+	!dv!.+arrayMethods+;
 	!dv!.+DataViewMethods+;
+	!obj!.+arrayMethods+;
 
 %%% ###########################################################################
 %%% ###########################################################################
@@ -300,6 +318,7 @@ wrapper :=
 str :=
 	try { var @str@ = "+strings+"; } catch (e) {}
 	try { var @str@ = String.fromCharCode(+charCodes+); } catch (e) {}
+	try { var @str@ = String.fromCodePoint(+codePoints+); } catch (e) {}
 
 obj :=
 	try { var @obj@ = {}; } catch (e) {}
@@ -308,10 +327,10 @@ obj :=
 
 arr :=
 	try { var @arr@ = new Array(%repeat%(+floats+, ", ")); } catch (e) {}
-	try { var @arr@ = new Array(%repeat%(+others+, ", ")); } catch (e) {}
+	try { var @arr@ = new Array(%repeat%(+all+, ", ")); } catch (e) {}
 	try { var @arr@ = Array.of(%repeat%(+unsigned+, ", ")); } catch (e) {}
 	try { var @arr@ = Array.of(%repeat%(+floats+, ", ")); } catch (e) {}
-	try { var @arr@ = Array.of(%repeat%(+others+, ", ")); } catch (e) {}
+	try { var @arr@ = Array.of(%repeat%(+all+, ", ")); } catch (e) {}
 
 e_arr :=
 	try { var @e_arr@ = new Array(+unsafeSizes+); } catch (e) {}
