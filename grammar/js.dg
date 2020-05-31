@@ -2,11 +2,11 @@
 %%% ## Twitter: https://twitter.com/farazsth98
 %%% ## Description: Grammar for fuzzing JavaScript
 
-%const% MAX_REPEAT_POWER := 6
-%const% VARIANCE_MIN := 100
-%const% VARIANCE_MAX := 400
-%const% VARIABLE_MIN := 10
-%const% VARIABLE_MAX := 20
+%const% MAX_REPEAT_POWER := 2
+%const% VARIANCE_MIN := 50
+%const% VARIANCE_MAX := 100
+%const% VARIABLE_MIN := 1
+%const% VARIABLE_MAX := 2
 
 %%% ###########################################################################
 %%% ###########################################################################
@@ -36,40 +36,31 @@ strings :=
 	%range%(0-9)
 	%repeat%(+strings+)
 
+booleans :=
+	true
+	false
+
 others :=
 	+integers+
 	+floats+
 	"+strings+"
+	+booleans+
 	{}
 	[]
 	{'a':+integers+}
 	!str!
 	!obj!
 	!arr!
+	NaN
+	undefined
+	null
 
 unsafeSizes :=
+	%range%(0-64)
 	255
-	65535
-	4294967295
 	256
-	65536
-	4294967296
 	127
-	32767
-	2147483647
-	9223372036854775807
 	128
-	32768
-	2147483648
-	9223372036854775808
-	-128
-	-32768
-	-2147483648
-	-9223372036854775808
-	-129
-	-32769
-	-2147483649
-	-9223372036854775809
 
 charCodes :=
 	0x%range%(0x0-0xff)
@@ -87,24 +78,34 @@ twoFloatArgs :=
 threeFloatArgs :=
 	%range%(0.0-64.0), %range%(0.0-64.0), %range%(0.0-64.0)
 
+%%% ##############################################################################################
+%%% ##############################################################################################
 %%% ######## Generic Functions ########
+%%% ##############################################################################################
+%%% ##############################################################################################
 
 genericFuncArrayMap :=
 	function(c_val, c_index, c_array) { c_array.+JSArrayInPlaceMethod+ }
 
 genericFuncArraySort :=
-	+genericFuncArraySortNumeric+
-
-genericFuncArraySortNumeric :=
 	function(c_first, c_second) { c_first < c_second; }
 	function(c_first, c_second) { c_first <= c_second; }
 	function(c_first, c_second) { c_first >= c_second; }
 	function(c_first, c_second) { c_first > c_second; }
 
+%%% ##############################################################################################
+%%% ##############################################################################################
 %%% ######## JSArrays ########
 %%% ## https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array ##
+%%% ##############################################################################################
+%%% ##############################################################################################
 
 arrayMethods :=
+	+JSArrayCallbackMethod+
+	+JSArrayInPlaceMethod+
+	+JSArrayForLoopUnsafe+
+
+arrayMethodsForLoop :=
 	+JSArrayCallbackMethod+
 	+JSArrayInPlaceMethod+
 
@@ -124,15 +125,18 @@ JSArrayCallbackMethod :=
 	+sort+
 
 map :=
-	map(+genericFuncArrayMap+);
-	map(async +genericFuncArrayMap+);
+	map(+genericFuncArrayMap+)
 
 sort :=
-	sort();
-	sort(+genericFuncArraySort+);
-	sort(async +genericFuncArraySort+);
+	sort()
+	sort(+genericFuncArraySort+)
 	
 %%% ######## Methods that occur in-place ########
+
+JSArrayForLoopUnsafe :=
+	+push+
+	+splice+
+	+unshift+
 
 JSArrayInPlaceMethod :=
 	+concat+
@@ -146,106 +150,142 @@ JSArrayInPlaceMethod :=
 %%%	+keys+
 	+lastIndexOf+
 	+pop+
-	+push+
 	+reverse+
 	+shift+
 	+slice+
-	+splice+
 %%%	+toLocaleString+
 	+toString+
-	+unshift+
 %%%	+values+
 
 concat :=
-	concat();
-	concat(!arr!);
-	concat(!obj!);
+	concat()
+	concat(!arr!)
+	concat(!obj!)
 
 copyWithin :=
-	copyWithin(+twoIntArgs+);
-	copyWithin(+threeIntArgs+);
-	copyWithin(+others+, +others+, +others+);
+	copyWithin(+twoIntArgs+)
+	copyWithin(+threeIntArgs+)
 
 flat :=
-	flat();
-	flat(+others+);
+	flat()
+	flat(+others+)
 
 %%%	entries :=
 
 fill :=
-	fill(+others+);
-	fill(+others+, +others+);
-	fill(+others+, +others+, +others+);
-	fill(+others+, +twoIntArgs+);
-	fill(+others+, +twoFloatArgs+);
+	fill(+others+)
+	fill(+others+, +twoIntArgs+)
 
 includes :=
-	includes(+others+);
-	includes(+others+, +others+);
-	includes(+others+, +integers+);
+	includes(+others+)
+	includes(+others+, +unsigned+)
 
 indexOf :=
-	indexOf(+others+);
-	indexOf(+others+, +others+);
-	indexOf(+others+, +integers+);
+	indexOf(+others+)
+	indexOf(+others+, +unsigned+)
 
 join :=
-	join();
-	join(+others+);
+	join()
+	join(+others+)
 
 %%%	keys :=
 
 lastIndexOf :=
-	lastIndexOf(+others+);
-	lastIndexOf(+others+, +others+);
-	lastIndexOf(+others+, +integers+);
+	lastIndexOf(+others+)
+	lastIndexOf(+others+, +unsigned+)
 
 pop :=
-	pop();
-	pop(%repeat%(+others+, ", "));
+	pop()
+	pop(%repeat%(+others+, ", "))
 
 push :=
-	push();
-	push(%repeat%(+others+, ", "));
+	push()
+	push(%repeat%(+others+, ", "))
 
 reverse :=
-	reverse();
-	reverse(%repeat%(+others+, ", "));
+	reverse()
+	reverse(%repeat%(+others+, ", "))
 
 shift :=
-	shift();
-	shift(%repeat%(+others+, ", "));
+	shift()
+	shift(%repeat%(+others+, ", "))
 
 slice :=
-	slice();
-	slice(+integers+);
-	slice(+integers+, +integers+);
-	slice(+others+, +others+);
+	slice()
+	slice(+unsigned+)
+	slice(+unsigned+, +unsigned+)
 
 splice :=
-	splice();
-	splice(+integers+);
-	splice(+integers+, +integers+);
-	splice(+integers+, +integers+, %repeat%(+others+, ", "));
-	splice(+others+, +others+, %repeat%(+others+, ", "));
+	splice()
+	splice(+unsigned+)
+	splice(+unsigned+, +unsigned+)
+	splice(+unsigned+, +unsigned+, %repeat%(+others+, ", "))
 
 toString :=
-	toString();
-	toString(%repeat%(+others+, ", "));
+	toString()
+	toString(%repeat%(+others+, ", "))
 
 unshift :=
-	unshift();
-	unshift(%repeat%(+others+, ", "));
+	unshift()
+	unshift(%repeat%(+others+, ", "))
 	
+%%% ##############################################################################################
+%%% ##############################################################################################
+%%% ######## DataViews ########
+%%% ### https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
+%%% ##############################################################################################
+%%% ##############################################################################################
 
+DataViewGetMethods :=
+    getFloat32
+    getFloat64
+    getInt16
+    getInt32
+    getInt8
+    getUint16
+    getUint32
+    getUint8
+
+DataViewSetMethods :=
+    setFloat32
+    setFloat64
+    setInt16
+    setInt32
+    setInt8
+    setUint16
+    setUint32
+    setUint8
+
+DataViewMethods :=
+	+DataViewGetMethods+(%range%(0-4), +booleans+)
+	+DataViewSetMethods+(%range%(0-4), +integers+)
+	+DataViewSetMethods+(%range%(0-4), +floats+)
+	+DataViewSetMethods+(%range%(0-4), +others+)
+
+%%% ##############################################################################################
+%%% ##############################################################################################
 %%% ######## Wrappers ########
+%%% ##############################################################################################
+%%% ##############################################################################################
+
+forLoopInit :=
+	for (var i = 0; i < !e_arr!.length; i++) { !e_arr![i] = +others+; }
+	for (var i = 0; i < !t_arr!.length; i++) { !t_arr![i] = +integers+; }
+	for (var i = 0; i < !t_arr!.length; i++) { !t_arr![i] = +floats+; }
+	for (var i = 0; i < !t_arr!.length; i++) { !t_arr![i] = +others+; }
 
 forLoops :=
-	for (var i = 0; i < +unsigned+; i++) { !arr!.+arrayMethods+ }
-	for (var i = 0; i < !arr!.length; i++) { !arr!.+arrayMethods+ }
+	for (var i = 0; i < +unsigned+; i++) { !arr!.+arrayMethods+; }
+	for (var i = 0; i < !arr!.length; i++) { !arr!.+arrayMethodsForLoop+; }
+	for (var i = 0; i < +unsigned+; i++) { !e_arr!.+arrayMethods+; }
+	for (var i = 0; i < !arr!.length; i++) { !e_arr!.+arrayMethodsForLoop+; }
+	+forLoopInit+
 
 wrapper :=
-	!arr!.+arrayMethods+
+	!arr!.+arrayMethods+;
+	!e_arr!.+arrayMethods+;
+	!t_arr!.+arrayMethods+;
+	!dv!.+DataViewMethods+;
 
 %%% ###########################################################################
 %%% ###########################################################################
@@ -265,16 +305,42 @@ obj :=
 	try { var @obj@ = {}; } catch (e) {}
 	try { var @obj@ = Object.create(null); } catch (e) {}
 	try { var @obj@ = Object.create(!obj!); } catch (e) {}
-	try { var @obj@ = { ...!obj! }; } catch (e) {}
 
 arr :=
-	try { var @arr@ = new Array(%repeat%(+integers+, ", ")); } catch (e) {}
 	try { var @arr@ = new Array(%repeat%(+floats+, ", ")); } catch (e) {}
 	try { var @arr@ = new Array(%repeat%(+others+, ", ")); } catch (e) {}
-	try { var @arr@ = new Array(+unsafeSizes+); } catch (e) {}
-	try { var @arr@ = Array.of(%repeat%(+integers+, ", ")); } catch (e) {}
+	try { var @arr@ = Array.of(%repeat%(+unsigned+, ", ")); } catch (e) {}
 	try { var @arr@ = Array.of(%repeat%(+floats+, ", ")); } catch (e) {}
 	try { var @arr@ = Array.of(%repeat%(+others+, ", ")); } catch (e) {}
+
+e_arr :=
+	try { var @e_arr@ = new Array(+unsafeSizes+); } catch (e) {}
+
+t_arr :=
+	try { var @t_arr@ = new Int8Array(+unsafeSizes+); } catch (e) {}
+	try { var @t_arr@ = new Uint8Array(+unsafeSizes+); } catch (e) {}
+	try { var @t_arr@ = new Uint8ClampedArray(+unsafeSizes+); } catch (e) {}
+	try { var @t_arr@ = new Int16Array(+unsafeSizes+); } catch (e) {}
+	try { var @t_arr@ = new Uint16Array(+unsafeSizes+); } catch (e) {}
+	try { var @t_arr@ = new Int32Array(+unsafeSizes+); } catch (e) {}
+	try { var @t_arr@ = new Uint32Array(+unsafeSizes+); } catch (e) {}
+	try { var @t_arr@ = new Float32Array(+unsafeSizes+); } catch (e) {}
+	try { var @t_arr@ = new Float64Array(+unsafeSizes+); } catch (e) {}
+	try { var @t_arr@ = new Int8Array(!buf!); } catch (e) {}
+	try { var @t_arr@ = new Uint8Array(!buf!); } catch (e) {}
+	try { var @t_arr@ = new Uint8ClampedArray(!buf!); } catch (e) {}
+	try { var @t_arr@ = new Int16Array(!buf!); } catch (e) {}
+	try { var @t_arr@ = new Uint16Array(!buf!); } catch (e) {}
+	try { var @t_arr@ = new Int32Array(!buf!); } catch (e) {}
+	try { var @t_arr@ = new Uint32Array(!buf!); } catch (e) {}
+	try { var @t_arr@ = new Float32Array(!buf!); } catch (e) {}
+	try { var @t_arr@ = new Float64Array(!buf!); } catch (e) {}
+
+buf :=
+	try { var @buf@ = new ArrayBuffer(+unsafeSizes+); } catch (e) {}
+
+dv :=
+	try { var @dv@ = new DataView(!buf!); } catch (e) {}
 
 %%% ###########################################################################
 %%% ###########################################################################
@@ -285,5 +351,5 @@ arr :=
 %section% := variance
 
 main :=
-	try { +wrapper+ } catch(e) {}
 	try { +forLoops+ } catch(e) {}
+	try { +wrapper+ } catch(e) {}
