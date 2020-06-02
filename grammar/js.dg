@@ -5,8 +5,8 @@
 %const% MAX_REPEAT_POWER := 2
 %const% VARIANCE_MIN := 50
 %const% VARIANCE_MAX := 100
-%const% VARIABLE_MIN := 2
-%const% VARIABLE_MAX := 5
+%const% VARIABLE_MIN := 1
+%const% VARIABLE_MAX := 1
 
 %%% ###########################################################################
 %%% ###########################################################################
@@ -58,12 +58,8 @@ others :=
 	undefined
 	null
 
-unsafeSizes :=
+sizes :=
 	%range%(0-64)
-	255
-	256
-	127
-	128
 
 charCodes :=
 	0x%range%(0x0-0xff)
@@ -86,14 +82,24 @@ threeFloatArgs :=
 
 %%% ##############################################################################################
 %%% ##############################################################################################
-%%% ######## Generic Functions ########
+%%% ######## Functions ########
 %%% ##############################################################################################
 %%% ##############################################################################################
 
-genericFuncArrayMap :=
-	function(c_val, c_index, c_array) { c_array.+JSArrayInPlaceMethod+ }
+genericEmptyFunc :=
+	function() {}
 
-genericFuncArraySort :=
+%%% TODO: Fix this after adding +JSArrayInteractions+
+genericFuncThreeArgs :=
+	function(c_val, c_index, c_array) { c_array[c_index] = c_array.+arrayMethods+ }
+
+genericFuncOneArgCmp :=
+	function(element => element < +unsigned+)
+	function(element => element <= +unsigned+)
+	function(element => element >= +unsigned+)
+	function(element => element > +unsigned+)
+
+genericFuncTwoArgCmp :=
 	function(c_first, c_second) { c_first < c_second; }
 	function(c_first, c_second) { c_first <= c_second; }
 	function(c_first, c_second) { c_first >= c_second; }
@@ -119,7 +125,7 @@ arrayMethodsForLoop :=
 
 JSArrayCallbackMethod :=
 %%%	+every+
-%%%	+filter+
+	+filter+
 %%%	+find+
 %%%	+findIndex+
 %%%	+flatMap+
@@ -130,12 +136,22 @@ JSArrayCallbackMethod :=
 %%%	+some+
 	+sort+
 
+%%% TODO: All callback functions can have three arguments, so all of these interactions need to be
+%%%       accounted for in the callback methods here
+
+filter :=
+	filter()
+	filter(+genericEmptyFunc+)
+	filter(+genericOneArgCmp+)
+
 map :=
-	map(+genericFuncArrayMap+)
+	map(+genericEmptyFunc+)
+	map(+genericFuncThreeArgs+)
 
 sort :=
 	sort()
-	sort(+genericFuncArraySort+)
+	sort(+genericEmptyFunc+)
+	sort(+genericFuncTwoArgCmp+)
 	
 %%% ######## Methods that occur in-place ########
 
@@ -143,17 +159,17 @@ JSArrayForLoopUnsafe :=
 	+push+
 	+splice+
 	+unshift+
+	+concat+
 
 JSArrayInPlaceMethod :=
-	+concat+
 	+copyWithin+
-%%%	+entries+
+	+entries+
 	+fill+
 	+flat+
 	+includes+
 	+indexOf+
 	+join+
-%%%	+keys+
+	+keys+
 	+lastIndexOf+
 	+pop+
 	+reverse+
@@ -176,7 +192,9 @@ flat :=
 	flat()
 	flat(+all+)
 
-%%%	entries :=
+entries :=
+	entries()
+	entries(%repeat%(+all+, ", "))
 
 fill :=
 	fill(+all+)
@@ -194,7 +212,9 @@ join :=
 	join()
 	join(+all+)
 
-%%%	keys :=
+keys :=
+	keys()
+	keys(%repeat%(+all+, ", "))
 
 lastIndexOf :=
 	lastIndexOf(+all+)
@@ -234,6 +254,12 @@ toString :=
 unshift :=
 	unshift()
 	unshift(%repeat%(+all+, ", "))
+
+values :=
+	values()
+	values(%repeat%(+all+, ", "))
+
+%%% TODO: Add +JSArrayInteractions+
 	
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -274,6 +300,18 @@ DataViewMethods :=
 	+DataViewSetMethods+(%range%(0-4), +DataViewSetArgs+, +booleans+)
 	+DataViewSetMethods+(%range%(0-4), +DataViewSetArgs+, +others+)
 
+DataViewInteractions :=
+	!dv!.+DataViewMethods+
+	!dv![i] = !dv!.+DataViewMethods+
+	!dv!.+arrayMethods+
+	!dv![i] = !dv!.+arrayMethods+
+
+DataViewForLoopInteractions :=
+	!dv!.+DataViewMethods+
+	!dv![i] = !dv!.+DataViewMethods+
+	!dv!.+arrayMethodsForLoop+
+	!dv![i] = !dv!.+arrayMethodsForLoop+
+
 %%% ##############################################################################################
 %%% ##############################################################################################
 %%% ######## Wrappers ########
@@ -286,12 +324,25 @@ initializableObjects :=
 	+arrays+
 
 forLoopInit :=
-	for (var i = 0; i < +arrays+.length; i++) { +arrays+[i] = +all+; }
+	for (var i = 0; i < !arr!.length; i++) { !arr![i] = +all+; }
+	for (var i = 0; i < !e_arr!.length; i++) { !e_arr![i] = +all+; }
+	for (var i = 0; i < !t_arr!.length; i++) { !t_arr![i] = +all+; }
+	for (var i = 0; i < !dv!.length; i++) { !dv![i] = +all+; }
+	for (var i = 0; i < !obj!.length; i++) { !obj![i] = +all+; }
 	for (var i = 0; i < +unsigned+; i++) { +initializableObjects+[i] = +all+; }
 
 forLoops :=
-	for (var i = 0; i < +unsigned+; i++) { +arrays+.+arrayMethods+; }
-	for (var i = 0; i < +arrays+.length; i++) { +arrays+.+arrayMethodsForLoop+; }
+	for (var i = 0; i < +unsigned+; i++) { !arr![i] = !arr!.+interactions+ }
+	for (var i = 0; i < +unsigned+; i++) { !arr![i] = !arr![i].+interactions+ }
+	for (var i = 0; i < +unsigned+; i++) { !e_arr![i] = !e_arr!.+interactions+ }
+	for (var i = 0; i < +unsigned+; i++) { !e_arr![i] = !e_arr![i].+interactions+ }
+	for (var i = 0; i < +unsigned+; i++) { !t_arr![i] = !t_arr!.+interactions+ }
+	for (var i = 0; i < +unsigned+; i++) { !t_arr![i] = !t_arr![i].+interactions+ }
+	for (var i = 0; i < +unsigned+; i++) { !obj![i] = !obj!.+interactions+ }
+	for (var i = 0; i < +unsigned+; i++) { !obj![i] = !obj![i].+interactions+ }
+	for (var i = 0; i < +unsigned+; i++) { !dv![i] = !dv!.+interactions+ }
+	for (var i = 0; i < +unsigned+; i++) { !dv![i] = !dv![i].+interactions+ }
+	for (var i = 0; i < !arr!.length; i++) { !arr![i] = !arr!.+arrayMethodsForLoop+; }
 	+forLoopInit+
 
 arrays :=
@@ -299,11 +350,14 @@ arrays :=
 	!e_arr!
 	!t_arr!
 
-wrapper :=
+interactions :=
 	+arrays+.+arrayMethods+;
-	!dv!.+arrayMethods+;
-	!dv!.+DataViewMethods+;
+	+DataViewInteractions+;
 	!obj!.+arrayMethods+;
+
+wrapper :=
+	try { +interactions+ } catch (e) {}
+	try { +forLoops+ } catch (e) {}
 
 %%% ###########################################################################
 %%% ###########################################################################
@@ -333,18 +387,18 @@ arr :=
 	try { var @arr@ = Array.of(%repeat%(+all+, ", ")); } catch (e) {}
 
 e_arr :=
-	try { var @e_arr@ = new Array(+unsafeSizes+); } catch (e) {}
+	try { var @e_arr@ = new Array(+sizes+); } catch (e) {}
 
 t_arr :=
-	try { var @t_arr@ = new Int8Array(+unsafeSizes+); } catch (e) {}
-	try { var @t_arr@ = new Uint8Array(+unsafeSizes+); } catch (e) {}
-	try { var @t_arr@ = new Uint8ClampedArray(+unsafeSizes+); } catch (e) {}
-	try { var @t_arr@ = new Int16Array(+unsafeSizes+); } catch (e) {}
-	try { var @t_arr@ = new Uint16Array(+unsafeSizes+); } catch (e) {}
-	try { var @t_arr@ = new Int32Array(+unsafeSizes+); } catch (e) {}
-	try { var @t_arr@ = new Uint32Array(+unsafeSizes+); } catch (e) {}
-	try { var @t_arr@ = new Float32Array(+unsafeSizes+); } catch (e) {}
-	try { var @t_arr@ = new Float64Array(+unsafeSizes+); } catch (e) {}
+	try { var @t_arr@ = new Int8Array(+sizes+); } catch (e) {}
+	try { var @t_arr@ = new Uint8Array(+sizes+); } catch (e) {}
+	try { var @t_arr@ = new Uint8ClampedArray(+sizes+); } catch (e) {}
+	try { var @t_arr@ = new Int16Array(+sizes+); } catch (e) {}
+	try { var @t_arr@ = new Uint16Array(+sizes+); } catch (e) {}
+	try { var @t_arr@ = new Int32Array(+sizes+); } catch (e) {}
+	try { var @t_arr@ = new Uint32Array(+sizes+); } catch (e) {}
+	try { var @t_arr@ = new Float32Array(+sizes+); } catch (e) {}
+	try { var @t_arr@ = new Float64Array(+sizes+); } catch (e) {}
 	try { var @t_arr@ = new Int8Array(!buf!); } catch (e) {}
 	try { var @t_arr@ = new Uint8Array(!buf!); } catch (e) {}
 	try { var @t_arr@ = new Uint8ClampedArray(!buf!); } catch (e) {}
@@ -356,10 +410,16 @@ t_arr :=
 	try { var @t_arr@ = new Float64Array(!buf!); } catch (e) {}
 
 buf :=
-	try { var @buf@ = new ArrayBuffer(+unsafeSizes+); } catch (e) {}
+	try { var @buf@ = new ArrayBuffer(+sizes+); } catch (e) {}
 
 dv :=
 	try { var @dv@ = new DataView(!buf!); } catch (e) {}
+	try { var @dv@ = new DataView(!buf!, +unsigned+, +unsigned+); } catch (e) {}
+
+iter :=
+	try { var @iter@ = +initializableObjects+.entries(); } catch (e) {}
+	try { var @iter@ = +initializableObjects+.keys(); } catch (e) {}
+	try { var @iter@ = +initializableObjects+.values(); } catch (e) {}
 
 %%% ###########################################################################
 %%% ###########################################################################
@@ -370,5 +430,5 @@ dv :=
 %section% := variance
 
 main :=
-	try { +forLoops+ } catch(e) {}
-	try { +wrapper+ } catch(e) {}
+	+forLoops+
+	+interactions+
