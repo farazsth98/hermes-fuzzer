@@ -2,7 +2,7 @@
 
 import subprocess, os, shutil, sys
 
-TIMEOUT = 20 # seconds
+TIMEOUT = 8 # seconds
 
 def main():
     if len(sys.argv) != 3:
