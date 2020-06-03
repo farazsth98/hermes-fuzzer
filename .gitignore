@@ -2,3 +2,5 @@ hermes
 inputs*
 timeouts
 logs
+dynamorio
+lcov

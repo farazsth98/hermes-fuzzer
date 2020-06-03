@@ -3,8 +3,8 @@
 %%% ## Description: Grammar for fuzzing JavaScript
 
 %const% MAX_REPEAT_POWER := 2
-%const% VARIANCE_MIN := 50
-%const% VARIANCE_MAX := 100
+%const% VARIANCE_MIN := 150
+%const% VARIANCE_MAX := 250
 %const% VARIABLE_MIN := 1
 %const% VARIABLE_MAX := 1
 
@@ -35,6 +35,10 @@ strings :=
 	%range%(A-Z)
 	%range%(0-9)
 	%repeat%(+strings+)
+
+properties :=
+	%range%(a-z)
+	%range%(A-Z)
 
 booleans :=
 	true
@@ -82,28 +86,58 @@ threeFloatArgs :=
 
 %%% ##############################################################################################
 %%% ##############################################################################################
-%%% ######## Functions ########
+%%% ######## Callback Functions ########
 %%% ##############################################################################################
 %%% ##############################################################################################
 
 genericEmptyFunc :=
 	function() {}
 
-%%% TODO: Fix this after adding +JSArrayInteractions+
-genericFuncThreeArgs :=
-	function(c_val, c_index, c_array) { c_array[c_index] = c_array.+arrayMethods+ }
+genericFuncOneArg :=
+	function(element) { element.+arrayMethods+; }
+	function(element) { element.+DataViewMethods+; }
 
 genericFuncOneArgCmp :=
-	function(element => element < +unsigned+)
-	function(element => element <= +unsigned+)
-	function(element => element >= +unsigned+)
-	function(element => element > +unsigned+)
+	function(element) { element < +integers+; }
+	function(element) { element <= +integers+; }
+	function(element) { element >= +integers+; }
+	function(element) { element > +integers+; }
 
-genericFuncTwoArgCmp :=
+genericFuncOneArgNumOp :=
+	function(element) { element + +integers+; }
+	function(element) { element - +integers+; }
+	function(element) { element * +integers+; }
+	function(element) { element / +integers+; }
+	function(element) { element ^ +integers+; }
+
+genericFuncTwoArgs :=
+	function(acc, element) { acc.+JSArrayInPlaceMethodNames+(element); }
+	function(acc, element) { acc.+JSArrayForLoopUnsafeNames+(element); }
+
+genericFuncTwoArgsCmp :=
 	function(c_first, c_second) { c_first < c_second; }
 	function(c_first, c_second) { c_first <= c_second; }
 	function(c_first, c_second) { c_first >= c_second; }
 	function(c_first, c_second) { c_first > c_second; }
+
+genericFuncTwoArgsNumOp :=
+	function(acc, element) { acc + element; }
+	function(acc, element) { acc - element; }
+	function(acc, element) { acc * element; }
+	function(acc, element) { acc / element; }
+	function(acc, element) { acc ^ element; }
+
+genericFuncThreeArgs :=
+	function(c_val, c_index, c_array) { c_array[c_index] = c_array.+arrayMethods+; }
+	function(c_val, c_index, c_array) { c_array[c_index] = c_val.+arrayMethods+; }
+	function(c_val, c_index, c_array) { c_val = c_array.+arrayMethods+; }
+	function(c_val, c_index, c_array) { c_val = c_val.+arrayMethods+; }
+
+genericFuncFourArgs :=
+	function(acc, cval, c_index, c_array) { c_array[c_index] = c_array.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { c_array[c_index] = c_val.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { c_val = c_array.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { c_val = c_val.+arrayMethods+; }
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -111,6 +145,15 @@ genericFuncTwoArgCmp :=
 %%% ## https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array ##
 %%% ##############################################################################################
 %%% ##############################################################################################
+
+%%% #############################################
+%%% ######## Wrappers around all methods ########
+%%% #############################################
+
+arrayMethodNames :=
+	+JSArrayCallbackMethodNames+
+	+JSArrayInPlaceMethodNames+
+	+JSArrayForLoopUnsafeNames+
 
 arrayMethods :=
 	+JSArrayCallbackMethod+
@@ -121,45 +164,146 @@ arrayMethodsForLoop :=
 	+JSArrayCallbackMethod+
 	+JSArrayInPlaceMethod+
 
+%%% ########################################
 %%% ######## Methods with callbacks ########
+%%% ########################################
+
+%%% ########################################
+%%% ######## Names and Declarations ########
+%%% ########################################
+
+JSArrayCallbackMethodNames :=
+	every
+	filter
+	find
+	findIndex
+	flatMap
+	forEach
+	map
+	reduce
+	reduceRight
+	some
+	sort
 
 JSArrayCallbackMethod :=
-%%%	+every+
+	+every+
 	+filter+
-%%%	+find+
-%%%	+findIndex+
-%%%	+flatMap+
-%%%	+forEach+
+	+find+
+	+findIndex+
+	+flatMap+
+	+forEach+
 	+map+
-%%%	+reduce+
-%%%	+reduceRight+
+	+reduce+
+	+reduceRight+
 %%%	+some+
 	+sort+
 
-%%% TODO: All callback functions can have three arguments, so all of these interactions need to be
-%%%       accounted for in the callback methods here
+%%% ######## Implementations ########
+
+every :=
+	every()
+	every(+genericEmptyFunc+)
+	every(+genericFuncOneArgCmp+)
+	every(+genericFuncThreeArgs+)
 
 filter :=
 	filter()
 	filter(+genericEmptyFunc+)
-	filter(+genericOneArgCmp+)
+	filter(+genericFuncOneArgCmp+)
+	filter(+genericFuncThreeArgs+)
+
+find :=
+	find()
+	find(+genericEmptyFunc+)
+	find(+genericFuncOneArgCmp+)
+	find(+genericFuncThreeArgs+)
+
+findIndex :=
+	findIndex()
+	findIndex(+genericEmptyFunc+)
+	findIndex(+genericFuncOneArgCmp+)
+	findIndex(+genericFuncThreeArgs+)
+
+flatMap :=
+	flatMap()
+	flatMap(+genericEmptyFunc+)
+	flatMap(+genericFuncOneArg+)
+	flatMap(+genericFuncOneArgNumOp+)
+	flatMap(+genericFuncThreeArgs+)
+
+forEach :=
+	forEach()
+	forEach(+genericEmptyFunc+)
+	forEach(+genericFuncOneArg+)
+	forEach(+genericFuncThreeArgs+)
 
 map :=
 	map(+genericEmptyFunc+)
+	map(+genericFuncOneArg+)
+	map(+genericFuncOneArgNumOp+)
 	map(+genericFuncThreeArgs+)
+
+reduce :=
+	reduce()
+	reduce(+genericFuncTwoArgs+)
+	reduce(+genericFuncTwoArgsNumOp+)
+	reduce(+genericFuncFourArgs+)
+
+reduceRight :=
+	reduceRight()
+	reduceRight(+genericFuncTwoArgs+)
+	reduceRight(+genericFuncTwoArgsNumOp+)
+	reduceRight(+genericFuncFourArgs+)
+
+some :=
+	some()
+	some(+genericEmptyFunc+)
+	some(+genericFuncOneArgCmp+)
+	some(+genericFuncThreeArgs+)
 
 sort :=
 	sort()
 	sort(+genericEmptyFunc+)
-	sort(+genericFuncTwoArgCmp+)
+	sort(+genericFuncTwoArgsCmp+)
+	sort(+genericFuncThreeArgs+)
 	
+%%% #############################################
 %%% ######## Methods that occur in-place ########
+%%% #############################################
+
+%%% ########################################
+%%% ######## Names and Declarations ########
+%%% ########################################
+
+JSArrayForLoopUnsafeNames :=
+	push
+	splice
+	unshift
+	concat
 
 JSArrayForLoopUnsafe :=
 	+push+
 	+splice+
 	+unshift+
 	+concat+
+
+JSArrayInPlaceMethodNames :=
+	copyWithin
+	entries
+	fill
+	flat
+	includes
+	indexOf
+	join
+	keys
+	lastIndexOf
+	pop
+	reverse
+	shift
+	slice
+%%%	toLocaleString
+	toString
+%%%	values
 
 JSArrayInPlaceMethod :=
 	+copyWithin+
@@ -178,6 +322,10 @@ JSArrayInPlaceMethod :=
 %%%	+toLocaleString+
 	+toString+
 %%%	+values+
+
+%%% #################################
+%%% ######## Implementations ########
+%%% #################################
 
 concat :=
 	concat()
@@ -259,7 +407,33 @@ values :=
 	values()
 	values(%repeat%(+all+, ", "))
 
-%%% TODO: Add +JSArrayInteractions+
+ArrayInteractions :=
+	!arr!.+arrayMethods+
+	!arr![i] = !arr!.+arrayMethods+
+	!arr![i].+arrayMethods+
+	!arr![i] = !arr![i].+arrayMethods+
+	!t_arr!.+arrayMethods+
+	!t_arr![i] = !t_arr!.+arrayMethods+
+	!t_arr![i].+arrayMethods+
+	!t_arr![i] = !t_arr![i].+arrayMethods+
+	!obj!.+arrayMethods+
+	!obj![i] = !obj!.+arrayMethods+
+	!obj![i].+arrayMethods+
+	!obj![i] = !obj![i].+arrayMethods+
+
+ArrayForLoopInteractions :=
+	!arr!.+arrayMethodsForLoop+
+	!arr![i] = !arr!.+arrayMethodsForLoop+
+	!arr![i].+arrayMethodsForLoop+
+	!arr![i] = !arr![i].+arrayMethodsForLoop+
+	!t_arr!.+arrayMethodsForLoop+
+	!t_arr![i] = !t_arr!.+arrayMethodsForLoop+
+	!t_arr![i].+arrayMethodsForLoop+
+	!t_arr![i] = !t_arr![i].+arrayMethodsForLoop+
+	!obj!.+arrayMethodsForLoop+
+	!obj![i] = !obj!.+arrayMethodsForLoop+
+	!obj![i].+arrayMethodsForLoop+
+	!obj![i] = !obj![i].+arrayMethodsForLoop+
 	
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -319,39 +493,28 @@ DataViewForLoopInteractions :=
 %%% ##############################################################################################
 
 initializableObjects :=
+	!arr!
+	!t_arr!
 	!dv!
 	!obj!
-	+arrays+
 
 forLoopInit :=
 	for (var i = 0; i < !arr!.length; i++) { !arr![i] = +all+; }
-	for (var i = 0; i < !e_arr!.length; i++) { !e_arr![i] = +all+; }
 	for (var i = 0; i < !t_arr!.length; i++) { !t_arr![i] = +all+; }
 	for (var i = 0; i < !dv!.length; i++) { !dv![i] = +all+; }
 	for (var i = 0; i < !obj!.length; i++) { !obj![i] = +all+; }
 	for (var i = 0; i < +unsigned+; i++) { +initializableObjects+[i] = +all+; }
 
 forLoops :=
-	for (var i = 0; i < +unsigned+; i++) { !arr![i] = !arr!.+interactions+ }
-	for (var i = 0; i < +unsigned+; i++) { !arr![i] = !arr![i].+interactions+ }
-	for (var i = 0; i < +unsigned+; i++) { !e_arr![i] = !e_arr!.+interactions+ }
-	for (var i = 0; i < +unsigned+; i++) { !e_arr![i] = !e_arr![i].+interactions+ }
-	for (var i = 0; i < +unsigned+; i++) { !t_arr![i] = !t_arr!.+interactions+ }
-	for (var i = 0; i < +unsigned+; i++) { !t_arr![i] = !t_arr![i].+interactions+ }
-	for (var i = 0; i < +unsigned+; i++) { !obj![i] = !obj!.+interactions+ }
-	for (var i = 0; i < +unsigned+; i++) { !obj![i] = !obj![i].+interactions+ }
-	for (var i = 0; i < +unsigned+; i++) { !dv![i] = !dv!.+interactions+ }
-	for (var i = 0; i < +unsigned+; i++) { !dv![i] = !dv![i].+interactions+ }
-	for (var i = 0; i < !arr!.length; i++) { !arr![i] = !arr!.+arrayMethodsForLoop+; }
+	for (var i = 0; i < +unsigned+; i++) { +forLoopInteractions+ }
 	+forLoopInit+
 
-arrays :=
-	!arr!
-	!e_arr!
-	!t_arr!
+forLoopInteractions :=
+	try { +ArrayForLoopInteractions+; } catch (e) {}
+	try { +DataViewForLoopInteractions+; } catch (e) {}
 
 interactions :=
-	+arrays+.+arrayMethods+;
+	+ArrayInteractions+;
 	+DataViewInteractions+;
 	!obj!.+arrayMethods+;
 
@@ -376,18 +539,20 @@ str :=
 
 obj :=
 	try { var @obj@ = {}; } catch (e) {}
+	try { var @obj@ = {%repeat%(+properties+: +all+, ", ")}; } catch (e) {}
 	try { var @obj@ = Object.create(null); } catch (e) {}
-	try { var @obj@ = Object.create(!obj!); } catch (e) {}
+	try { var @obj@ = Object.create(!str!); } catch (e) {}
+	try { var @obj@ = Object.create(!arr!); } catch (e) {}
+	try { var @obj@ = Object.create(!t_arr!); } catch (e) {}
+	try { var @obj@ = Object.create(!dv!); } catch (e) {}
 
 arr :=
+	try { var @arr@ = new Array(+sizes+); } catch (e) {}
 	try { var @arr@ = new Array(%repeat%(+floats+, ", ")); } catch (e) {}
 	try { var @arr@ = new Array(%repeat%(+all+, ", ")); } catch (e) {}
 	try { var @arr@ = Array.of(%repeat%(+unsigned+, ", ")); } catch (e) {}
 	try { var @arr@ = Array.of(%repeat%(+floats+, ", ")); } catch (e) {}
 	try { var @arr@ = Array.of(%repeat%(+all+, ", ")); } catch (e) {}
-
-e_arr :=
-	try { var @e_arr@ = new Array(+sizes+); } catch (e) {}
 
 t_arr :=
 	try { var @t_arr@ = new Int8Array(+sizes+); } catch (e) {}
@@ -430,5 +595,4 @@ iter :=
 %section% := variance
 
 main :=
-	+forLoops+
-	+interactions+
+	+wrapper+
