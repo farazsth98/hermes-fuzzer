@@ -1,10 +1,38 @@
-#!/usr/bin/env python3
-
 import subprocess, os, shutil, sys
 
 TIMEOUT = 8 # seconds
+BINARY = "./hermes/build_asan_ubsan/bin/hermes" # CHANGE THIS
+DRRUN = "dynamorio/bin64/drrun" # DynamoRIO drrun path
+COV_EVERY_N = 100 # Gather coverage every COV_EVERY_N testcases
+
+def check_setup():
+    if not os.path.isdir("crashes"):
+        print("ERROR: Directory structure not setup correctly. Please run ./setup.sh")
+        sys.exit(1)
+
+    if not os.path.isdir("logs"):
+        print("ERROR: Directory structure not setup correctly. Please run ./setup.sh")
+        sys.exit(1)
+
+    if not os.path.isdir("coverage"):
+        print("ERROR: Directory structure not setup correctly. Please run ./setup.sh")
+        sys.exit(1)
+
+    if not os.path.isdir("coverage/html"):
+        print("ERROR: Directory structure not setup correctly. Please run ./setup.sh")
+        sys.exit(1)
+
+    if not os.path.isdir("dynamorio"):
+        print("ERROR: DynamoRIO not found in the local directory. Please run ./setup.sh or rename the DynamoRIO directory to \"dynamorio\"")
+        sys.exit(1)
+
+    if not os.path.exists("dynamorio/bin64/drrun") or not os.path.exists("dynamorio/tools/bin64/drcov2lcov") or not os.path.exists("dynamorio/tools/bin64/genhtml"):
+        print("ERROR: DynamoRIO was not installed correctly. Please run ./install-dynamorio.sh")
+        sys.exit(1)
 
 def main():
+    check_setup()
+
     if len(sys.argv) != 3:
         print("Usage: python3 fuzz.py <inputs_dir> <node_number>")
         sys.exit(1)
@@ -23,36 +51,53 @@ def main():
         sys.exit(1)
 
     # Used to name crash and timeout test cases
-    crashes = timeouts = num = 0
+    crashes = timeouts = num = timeout_percent = 0
+
+    # Used to determine when to gather code coverage data
+    get_coverage = False
 
     # ASAN_OPTIONS environment variable
     asan_options = "detect_leaks=0,exitcode=42,abort_on_error=1,disable_coredump=0"
     env = os.environ.copy()
     env["ASAN_OPTIONS"] = asan_options
 
-    try:
-        for f in file_list:
-            num += 1
-            filename = f"./{sys.argv[1]}/{f}"
-            print(f"\r######## Test case {num} - {f} ########", end="", flush=True)
-            try:
-                child = subprocess.run(["./hermes/build_asan/bin/hermes", filename], timeout=TIMEOUT,
-                        env=env)
-                exit_code = child.returncode
-                if exit_code != 0:
-                    crashes += 1
-                    crash_file = f"crash{crashes}.js"
-                    print(f"\nCrashed. Saved as {crash_file}")
-                    shutil.copyfile(filename, f"./crashes/n{node_num}_{crash_file}.js")
-            except subprocess.TimeoutExpired:
-                timeouts += 1
-    except KeyboardInterrupt:
-        percentage_timeout = float(timeouts) / float(num) * 100.0
-        with open(f"logs/fuzzer{node_num}", "w") as logfile:
-            logfile.write(
-                    f"Fuzzer {node_num} - Percentage of test cases that timed out: {percentage_timeout}%\n")
-        sys.exit(0)
-            
+    for f in file_list:
+        num += 1
+        
+        # Every 100 test cases, we want to gather coverage
+        if (num % COV_EVERY_N == 0):
+            get_coverage = True
+
+        timeout_percent = float(timeouts) / float(num) * 100.0
+        filename = f"./{sys.argv[1]}/{f}"
+        print(f"\r######## Test case {num}: {f} | Timeouts: {timeout_percent}% ########", 
+                end="", flush=True)
+
+        try:
+            # If your binary requires extra arguments, add them here after the filename
+            child = subprocess.run([BINARY, filename], timeout=TIMEOUT,
+                    env=env)
+            exit_code = child.returncode
+
+            if exit_code != 0: # We crashed
+                crashes += 1
+                crash_file = f"crash{crashes}.js"
+                print(f"\nCrashed. Saved as {crash_file}")
+                shutil.copyfile(filename, f"./crashes/n{node_num}_{crash_file}")
+            else:
+                # We only want to gather coverage for non-crashing test cases
+                if not get_coverage:
+                    continue
+                
+                subprocess.run([DRRUN, "-t", "drcov", "-logdir", "coverage", "--", BINARY, filename])
+                get_coverage = False
+
+        except subprocess.TimeoutExpired:
+            timeouts += 1
+
+    log_file = f"logs/fuzzer{node_num}.log"
+    with open(log_file, "w") as f:
+        f.write(f"Timeout percentage: {timeout_percent}%\n")
 
 if __name__ == "__main__":
     main()
