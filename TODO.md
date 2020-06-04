@@ -1,2 +1,3 @@
-* Add code coverage with DynamoRIO. Use it to gather coverage for a small sample of test cases
+* Add grammar for Object methods
+* Maybe add a patch to hermes to allow for GC calls somehow?
 * Port the fuzzer over to rust later (MAYBE)
