@@ -75,8 +75,8 @@ def main():
 
         try:
             # If your binary requires extra arguments, add them here after the filename
-            child = subprocess.run([BINARY, filename], timeout=TIMEOUT,
-                    env=env)
+            child = subprocess.run([BINARY, filename, "-Xhermes-internal-test-methods", 
+                "-Xes6-proxy"], timeout=TIMEOUT, env=env)
             exit_code = child.returncode
 
             if exit_code != 0: # We crashed
