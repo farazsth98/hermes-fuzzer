@@ -71,6 +71,9 @@ objects :=
 	{ %repeat%(+properties+: +numbers+, ", ") }
 	{ %repeat%(+properties+: +arrays+, ", ") }
 	{ %repeat%(+properties+: {}, ", ") }
+	(new ArrayBuffer(+smallUnsigned+))
+	(new DataView(new ArrayBuffer(+smallUnsigned+)); } catch (e) {})
+	(new DataView(new ArrayBuffer(+smallUnsigned+), +smallUnsigned+, +smallUnsigned+); } catch (e) {})
 
 arrays :=
 	[]
@@ -78,6 +81,7 @@ arrays :=
 	[%repeat%(+unsigned+, ", ")]
 	[%repeat%(+floats+, ", ")]
 	[%repeat%(+objects+, ", ")]
+	[%repeat%(+arrays+, ", ")]
 	(new +TypedArrayNames+(%repeat%(+integers+, ", ")))
 	(new +TypedArrayNames+(%repeat%(+unsigned+, ", ")))
 	(new +TypedArrayNames+(%repeat%(+floats+, ", ")))
@@ -93,6 +97,8 @@ all :=
 	!str!
 	!obj!
 	!arr!
+	!dv!
+	!buf!
 	+others+
 
 others :=
@@ -518,6 +524,34 @@ assign :=
 	assign(+initializableObjects+, +objects+)
 	assign(+initializableObjects+, %repeat%(+objects+))
 
+descriptor :=
+	{ value: +all+, writable: +booleans+, configurable: +booleans+, enumerable: +booleans+ }
+
+defineProperties :=
+	defineProperties(+initializableObjects+, %repeat%(+properties+: +descriptor+, ", "))
+	defineProperties(+objects+, %repeat%(+properties+: +descriptor+, ", "))
+	defineProperties(+arrays+, %repeat%(+properties+: +descriptor+, ", "))
+
+defineProperty :=
+	defineProperty(+initializableObjects+, "+properties", +descriptor+)
+	defineProperties(+objects+, %repeat%(, ", "))
+	defineProperties(+arrays+, %repeat%(descriptor, ", "))
+
+freeze :=
+	freeze(+initializableObjects+)
+	freeze(+objects+)
+	freeze(+arrays+)
+
+preventExtensions :=
+	preventExtensions(+initializableObjects+)
+	preventExtensions(+objects+)
+	preventExtensions(+arrays+)
+
+seal :=
+	seal(+initializableObjects+)
+	seal(+objects+)
+	seal(+arrays+)
+
 %%% ##############################################################################################
 %%% ##############################################################################################
 %%% ######## TypedArrays ########
@@ -586,10 +620,10 @@ ArrayForLoopInteractions :=
 
 ObjectInteractions :=
 	Object.+assign+
-%%%	Object.+defineProperties+
-%%%	Object.+defineProperty+
+	Object.+defineProperties+
+	Object.+defineProperty+
 %%%	Object.+entries+
-%%%	Object.+freeze+
+	Object.+freeze+
 %%%	Object.+fromEntries+
 %%%	Object.+getOwnPropertyDescriptor+
 %%%	Object.+getOwnPropertyDescriptors+
@@ -601,8 +635,8 @@ ObjectInteractions :=
 %%%	Object.+isFrozen+
 %%%	Object.+isSealed+
 %%%	Object.+keys+
-%%%	Object.+preventExtensions+
-%%%	Object.+seal+
+	Object.+preventExtensions+
+	Object.+seal+
 %%%	Object.+setPrototypeOf+
 %%%	Object.+values+
 
@@ -626,13 +660,40 @@ forLoopInit :=
 	for (var i = 0; i < !obj!.length; i++) { !obj![i] = +all+; }
 	for (var i = 0; i < +smallUnsigned+; i++) { +initializableObjects+[i] = +all+; }
 
+forInLoops :=
+	for (var i in +initializableObjects+) { try { i.+arrayMethods+; } catch (e) {} }
+	for (var i in +initializableObjects+) { try { i.+DataViewMethods+; } catch (e) {} }
+	for (var i in +objects+) { try { i.+arrayMethods+; } catch (e) {} }
+	for (var i in +arrays+) { try { i.+DataViewMethods+; } catch (e) {} }
+	
+forOfLoops :=
+	for (var [i, j] of +initializableObjects+.entries()) { try { j.+arrayMethods+; } catch(e) }
+	for (var [i, j] of +initializableObjects+.entries()) { try { j.+DataViewMethods+; } catch(e) }
+	for (var [i, j] of Object.entries(+initializableObjects+)) { try { j.+arrayMethods+; } catch(e) }
+	for (var [i, j] of Object.entries(+initializableObjects+)) { try { j.+DataViewMethods+; } catch(e) }
+	for (var i of +initializableObjects+.values()) { try { i.+arrayMethods+; } catch(e) }
+	for (var i of +initializableObjects+.values()) { try { i.+DataViewMethods+; } catch(e) }
+	for (var i of Object.values(+initializableObjects+)) { try { i.+arrayMethods+; } catch(e) }
+	for (var i of Object.values(+initializableObjects+)) { try { i.+DataViewMethods+; } catch(e) }
+	for (var [i, j] of +objects+.entries()) { try { j.+arrayMethods+; } catch(e) }
+	for (var [i, j] of +arrays+.entries()) { try { j.+DataViewMethods+; } catch(e) }
+	for (var [i, j] of Object.entries(+objects+)) { try { j.+arrayMethods+; } catch(e) }
+	for (var [i, j] of Object.entries(+arrays+)) { try { j.+DataViewMethods+; } catch(e) }
+	for (var i of +objects+.values()) { try { i.+arrayMethods+; } catch(e) }
+	for (var i of +arrays+.values()) { try { i.+DataViewMethods+; } catch(e) }
+	for (var i of Object.values(+objects+)) { try { i.+arrayMethods+; } catch(e) }
+	for (var i of Object.values(+arrays+)) { try { i.+DataViewMethods+; } catch(e) }
+
 forLoops :=
 	for (var i = 0; i < +smallUnsigned+; i++) { +forLoopInteractions+ }
 	+forLoopInit+
+	+forInLoops+
+	+forOfLoops+
 
 forLoopInteractions :=
 	try { +ArrayForLoopInteractions+; } catch (e) {}
 	try { +DataViewForLoopInteractions+; } catch (e) {}
+	try { +ObjectInteractions+; } catch (e) {}
 
 interactions :=
 	+ArrayInteractions+;
@@ -678,6 +739,11 @@ arr :=
 t_arr :=
 	try { var @t_arr@ = new +TypedArrayNames+(+sizes+); } catch (e) {}
 	try { var @t_arr@ = new +TypedArrayNames+(!buf!); } catch (e) {}
+	try { var @t_arr@ = new +TypedArrayNames+(!buf!, +smallUnsigned+, +smallUnsigned+); } catch (e) {}
+	try { var @t_arr@ = new +TypedArrayNames+(!arr!); } catch (e) {}
+	try { var @t_arr@ = new +TypedArrayNames+(!obj!); } catch (e) {}
+	try { var @t_arr@ = new +TypedArrayNames+(+arrays+); } catch (e) {}
+	try { var @t_arr@ = new +TypedArrayNames+(+objects+); } catch (e) {}
 
 buf :=
 	try { var @buf@ = new ArrayBuffer(+sizes+); } catch (e) {}
@@ -685,11 +751,6 @@ buf :=
 dv :=
 	try { var @dv@ = new DataView(!buf!); } catch (e) {}
 	try { var @dv@ = new DataView(!buf!, +smallUnsigned+, +smallUnsigned+); } catch (e) {}
-
-iter :=
-	try { var @iter@ = +initializableObjects+.entries(); } catch (e) {}
-	try { var @iter@ = +initializableObjects+.keys(); } catch (e) {}
-	try { var @iter@ = +initializableObjects+.values(); } catch (e) {}
 
 %%% ###########################################################################
 %%% ###########################################################################
