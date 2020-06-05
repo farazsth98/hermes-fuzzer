@@ -55,7 +55,7 @@ strings :=
 	%range%(0-9)
 	%repeat%(+strings+)
 
-properties :=
+propertyNames :=
 	%range%(a-z)
 	%range%(A-Z)
 
@@ -63,17 +63,20 @@ booleans :=
 	true
 	false
 
+props :=
+	+propertyNames+: +integers+
+    +propertyNames+: +unsigned+
+    +propertyNames+: +floats+
+    +propertyNames+: +numbers+
+    +propertyNames+: +arrays+
+    +propertyNames+: +objectsCopy+
+
 objects :=
 	{}
-	{ %repeat%(+properties+: +integers+, ", ") }
-	{ %repeat%(+properties+: +unsigned+, ", ") }
-	{ %repeat%(+properties+: +floats+, ", ") }
-	{ %repeat%(+properties+: +numbers+, ", ") }
-	{ %repeat%(+properties+: +arrays+, ", ") }
-	{ %repeat%(+properties+: {}, ", ") }
+	{ %repeat%(+props+, ", ") }
 	(new ArrayBuffer(+smallUnsigned+))
-	(new DataView(new ArrayBuffer(+smallUnsigned+)); } catch (e) {})
-	(new DataView(new ArrayBuffer(+smallUnsigned+), +smallUnsigned+, +smallUnsigned+); } catch (e) {})
+	(new DataView(new ArrayBuffer(+smallUnsigned+)))
+	(new DataView(new ArrayBuffer(+smallUnsigned+), +smallUnsigned+, +smallUnsigned+))
 
 arrays :=
 	[]
@@ -81,7 +84,27 @@ arrays :=
 	[%repeat%(+unsigned+, ", ")]
 	[%repeat%(+floats+, ", ")]
 	[%repeat%(+objects+, ", ")]
-	[%repeat%(+arrays+, ", ")]
+	[%repeat%(+arraysCopy+, ", ")]
+	(new +TypedArrayNames+(%repeat%(+integers+, ", ")))
+	(new +TypedArrayNames+(%repeat%(+unsigned+, ", ")))
+	(new +TypedArrayNames+(%repeat%(+floats+, ", ")))
+	(new +TypedArrayNames+(%repeat%(+numbers+, ", ")))
+
+%%% To prevent recursion
+
+objectsCopy :=
+	{}
+	{ %repeat%(+props+, ", ") }
+	(new ArrayBuffer(+smallUnsigned+))
+	(new DataView(new ArrayBuffer(+smallUnsigned+)))
+	(new DataView(new ArrayBuffer(+smallUnsigned+), +smallUnsigned+, +smallUnsigned+))
+
+arraysCopy :=
+	[]
+	[%repeat%(+integers+, ", ")]
+	[%repeat%(+unsigned+, ", ")]
+	[%repeat%(+floats+, ", ")]
+	[%repeat%(+objects+, ", ")]
 	(new +TypedArrayNames+(%repeat%(+integers+, ", ")))
 	(new +TypedArrayNames+(%repeat%(+unsigned+, ", ")))
 	(new +TypedArrayNames+(%repeat%(+floats+, ", ")))
@@ -92,7 +115,7 @@ all :=
 	+floats+
 	"+strings+"
 	+booleans+
-	+object+
+	+objects+
 	+arrays+
 	!str!
 	!obj!
@@ -522,20 +545,20 @@ ObjectMethodNames :=
 
 assign :=
 	assign(+initializableObjects+, +objects+)
-	assign(+initializableObjects+, %repeat%(+objects+))
+	assign(+initializableObjects+, %repeat%(+objects+, ", "))
 
 descriptor :=
 	{ value: +all+, writable: +booleans+, configurable: +booleans+, enumerable: +booleans+ }
 
 defineProperties :=
-	defineProperties(+initializableObjects+, %repeat%(+properties+: +descriptor+, ", "))
-	defineProperties(+objects+, %repeat%(+properties+: +descriptor+, ", "))
-	defineProperties(+arrays+, %repeat%(+properties+: +descriptor+, ", "))
+	defineProperties(+initializableObjects+, %repeat%({"+propertyNames+": +descriptor+}, ", "))
+	defineProperties(+objects+, %repeat%({"+propertyNames+": +descriptor+}, ", "))
+	defineProperties(+arrays+, %repeat%({"+propertyNames+": +descriptor+}, ", "))
 
 defineProperty :=
 	defineProperty(+initializableObjects+, "+properties", +descriptor+)
-	defineProperties(+objects+, %repeat%(, ", "))
-	defineProperties(+arrays+, %repeat%(descriptor, ", "))
+	defineProperty(+objects+, %repeat%(+descriptor+, ", "))
+	defineProperty(+arrays+, %repeat%(+descriptor+, ", "))
 
 freeze :=
 	freeze(+initializableObjects+)
@@ -667,22 +690,22 @@ forInLoops :=
 	for (var i in +arrays+) { try { i.+DataViewMethods+; } catch (e) {} }
 	
 forOfLoops :=
-	for (var [i, j] of +initializableObjects+.entries()) { try { j.+arrayMethods+; } catch(e) }
-	for (var [i, j] of +initializableObjects+.entries()) { try { j.+DataViewMethods+; } catch(e) }
-	for (var [i, j] of Object.entries(+initializableObjects+)) { try { j.+arrayMethods+; } catch(e) }
-	for (var [i, j] of Object.entries(+initializableObjects+)) { try { j.+DataViewMethods+; } catch(e) }
-	for (var i of +initializableObjects+.values()) { try { i.+arrayMethods+; } catch(e) }
-	for (var i of +initializableObjects+.values()) { try { i.+DataViewMethods+; } catch(e) }
-	for (var i of Object.values(+initializableObjects+)) { try { i.+arrayMethods+; } catch(e) }
-	for (var i of Object.values(+initializableObjects+)) { try { i.+DataViewMethods+; } catch(e) }
-	for (var [i, j] of +objects+.entries()) { try { j.+arrayMethods+; } catch(e) }
-	for (var [i, j] of +arrays+.entries()) { try { j.+DataViewMethods+; } catch(e) }
-	for (var [i, j] of Object.entries(+objects+)) { try { j.+arrayMethods+; } catch(e) }
-	for (var [i, j] of Object.entries(+arrays+)) { try { j.+DataViewMethods+; } catch(e) }
-	for (var i of +objects+.values()) { try { i.+arrayMethods+; } catch(e) }
-	for (var i of +arrays+.values()) { try { i.+DataViewMethods+; } catch(e) }
-	for (var i of Object.values(+objects+)) { try { i.+arrayMethods+; } catch(e) }
-	for (var i of Object.values(+arrays+)) { try { i.+DataViewMethods+; } catch(e) }
+	for (var [i, j] of +initializableObjects+.entries()) { try { j.+arrayMethods+; } catch(e) {}}
+	for (var [i, j] of +initializableObjects+.entries()) { try { j.+DataViewMethods+; } catch(e) {}}
+	for (var [i, j] of Object.entries(+initializableObjects+)) { try { j.+arrayMethods+; } catch(e) {}}
+	for (var [i, j] of Object.entries(+initializableObjects+)) { try { j.+DataViewMethods+; } catch(e) {}}
+	for (var i of +initializableObjects+.values()) { try { i.+arrayMethods+; } catch(e) {}}
+	for (var i of +initializableObjects+.values()) { try { i.+DataViewMethods+; } catch(e) {}}
+	for (var i of Object.values(+initializableObjects+)) { try { i.+arrayMethods+; } catch(e) {}}
+	for (var i of Object.values(+initializableObjects+)) { try { i.+DataViewMethods+; } catch(e) {}}
+	for (var [i, j] of +objects+.entries()) { try { j.+arrayMethods+; } catch(e) {}}
+	for (var [i, j] of +arrays+.entries()) { try { j.+DataViewMethods+; } catch(e) {}}
+	for (var [i, j] of Object.entries(+objects+)) { try { j.+arrayMethods+; } catch(e) {}}
+	for (var [i, j] of Object.entries(+arrays+)) { try { j.+DataViewMethods+; } catch(e) {}}
+	for (var i of +objects+.values()) { try { i.+arrayMethods+; } catch(e) {}}
+	for (var i of +arrays+.values()) { try { i.+DataViewMethods+; } catch(e) {}}
+	for (var i of Object.values(+objects+)) { try { i.+arrayMethods+; } catch(e) {}}
+	for (var i of Object.values(+arrays+)) { try { i.+DataViewMethods+; } catch(e) {}}
 
 forLoops :=
 	for (var i = 0; i < +smallUnsigned+; i++) { +forLoopInteractions+ }
@@ -721,7 +744,7 @@ str :=
 
 obj :=
 	try { var @obj@ = {}; } catch (e) {}
-	try { var @obj@ = {%repeat%(+properties+: +all+, ", ")}; } catch (e) {}
+	try { var @obj@ = {%repeat%(+propertyNames+: +all+, ", ")}; } catch (e) {}
 	try { var @obj@ = Object.create(null); } catch (e) {}
 	try { var @obj@ = Object.create(!str!); } catch (e) {}
 	try { var @obj@ = Object.create(!arr!); } catch (e) {}
