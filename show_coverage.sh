@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+rm -rf coverage/html
+
 echo "Generating coverage data..."
 
 # Generate coverage.info from drcov.*.log files
