@@ -1,6 +1,6 @@
 %%% ## Author: Syed Faraz Abrar
 %%% ## Twitter: https://twitter.com/farazsth98
-%%% ## Description: Grammar for fuzzing JavaScript
+%%% ## Description: Grammar for fuzzing JavaScript engines
 
 %const% MAX_REPEAT_POWER := 3
 %const% VARIANCE_MIN := 150
@@ -49,11 +49,13 @@ numbers :=
 	+unsigned+
 	+floats+
 
+stringChars :=
+	%range%(a-z)
+	%range%(A-Z)
+	%range%(0-9)
+
 strings :=
-	"%range%(a-z)"
-	"%range%(A-Z)"
-	"%range%(0-9)"
-	"%repeat%(+strings+)"
+	"%repeat%(+stringChars+)"
 
 propertyNames :=
 	%range%(a-z)
@@ -147,7 +149,7 @@ others :=
 all :=
 	+integers+
 	+floats+
-	"+strings+"
+	+strings+
 	+booleans+
 	+objects+
 	+arrays+
@@ -188,6 +190,12 @@ genericEmptyFunc :=
 genericFuncOneArg :=
 	function(element) { element.+arrayMethods+; }
 	function(element) { element.+DataViewMethods+; }
+	function(element) { arguments.+arrayMethods+; }
+	function(element) { arguments.+DataViewMethods+; }
+	function(element) { "use strict"; element.+arrayMethods+; }
+	function(element) { "use strict"; element.+DataViewMethods+; }
+	function(element) { "use strict"; arguments.+arrayMethods+; }
+	function(element) { "use strict"; arguments.+DataViewMethods+; }
 
 genericFuncOneArgCmp :=
 	function(element) { element < +integers+; }
@@ -205,6 +213,12 @@ genericFuncOneArgNumOp :=
 genericFuncTwoArgs :=
 	function(acc, element) { acc.+JSArrayInPlaceMethodNames+(element); }
 	function(acc, element) { acc.+JSArrayForLoopUnsafeNames+(element); }
+	function(acc, element) { arguments.+JSArrayInPlaceMethodNames+(element); }
+	function(acc, element) { arguments.+JSArrayForLoopUnsafeNames+(element); }
+	function(acc, element) { "use strict"; acc.+JSArrayInPlaceMethodNames+(element); }
+	function(acc, element) { "use strict"; acc.+JSArrayForLoopUnsafeNames+(element); }
+	function(acc, element) { "use strict"; arguments.+JSArrayInPlaceMethodNames+(element); }
+	function(acc, element) { "use strict"; arguments.+JSArrayForLoopUnsafeNames+(element); }
 
 genericFuncTwoArgsCmp :=
 	function(c_first, c_second) { c_first < c_second; }
@@ -222,14 +236,30 @@ genericFuncTwoArgsNumOp :=
 genericFuncThreeArgs :=
 	function(c_val, c_index, c_array) { c_array[c_index] = c_array.+arrayMethods+; }
 	function(c_val, c_index, c_array) { c_array[c_index] = c_val.+arrayMethods+; }
+	function(c_val, c_index, c_array) { c_array[c_index] = arguments.+arrayMethods+; }
 	function(c_val, c_index, c_array) { c_val = c_array.+arrayMethods+; }
 	function(c_val, c_index, c_array) { c_val = c_val.+arrayMethods+; }
+	function(c_val, c_index, c_array) { c_val = arguments.+arrayMethods+; }
+	function(c_val, c_index, c_array) { "use strict"; c_array[c_index] = c_array.+arrayMethods+; }
+	function(c_val, c_index, c_array) { "use strict"; c_array[c_index] = c_val.+arrayMethods+; }
+	function(c_val, c_index, c_array) { "use strict"; c_array[c_index] = arguments.+arrayMethods+; }
+	function(c_val, c_index, c_array) { "use strict"; c_val = c_array.+arrayMethods+; }
+	function(c_val, c_index, c_array) { "use strict"; c_val = c_val.+arrayMethods+; }
+	function(c_val, c_index, c_array) { "use strict"; c_val = arguments.+arrayMethods+; }
 
 genericFuncFourArgs :=
 	function(acc, cval, c_index, c_array) { c_array[c_index] = c_array.+arrayMethods+; }
 	function(acc, cval, c_index, c_array) { c_array[c_index] = c_val.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { c_array[c_index] = arguments.+arrayMethods+; }
 	function(acc, cval, c_index, c_array) { c_val = c_array.+arrayMethods+; }
 	function(acc, cval, c_index, c_array) { c_val = c_val.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { c_val = arguments.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { "use strict"; c_array[c_index] = c_array.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { "use strict"; c_array[c_index] = c_val.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { "use strict"; c_array[c_index] = arguments.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { "use strict"; c_val = c_array.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { "use strict"; c_val = c_val.+arrayMethods+; }
+	function(acc, cval, c_index, c_array) { "use strict"; c_val = arguments.+arrayMethods+; }
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -581,9 +611,8 @@ defineProperties :=
 	defineProperties(+arrays+, %repeat%({"+propertyNames+": +descriptor+}, ", "))
 
 defineProperty :=
-
-	defineProperty(+objects+, %repeat%(+descriptor+, ", "))
-	defineProperty(+arrays+, %repeat%(+descriptor+, ", "))
+	defineProperty(+objects+, "+propertyNames+", %repeat%(+descriptor+, ", "))
+	defineProperty(+arrays+, "+propertyNames+", %repeat%(+descriptor+, ", "))
 
 freeze :=
 	freeze(+initializableObjects+)
@@ -668,6 +697,8 @@ ArrayInteractions :=
 	!obj![i] = !obj!.+arrayMethods+
 	!obj![i].+arrayMethods+
 	!obj![i] = !obj![i].+arrayMethods+
+	+randomIndexInsertions+
+	+randomLengthChanges+
 
 ArrayForLoopInteractions :=
 	!arr!.+arrayMethodsForLoop+
@@ -712,6 +743,43 @@ ObjectInteractions :=
 	Object.+seal+
 %%%	Object.+setPrototypeOf+
 %%%	Object.+values+
+
+%%% ##############################################################################################
+%%% ##############################################################################################
+%%% ######## Random Array Operations ########
+%%% ##############################################################################################
+%%% ##############################################################################################
+
+interestingIndices :=
+	%range%(1050000-2000000)
+
+randomIndexInsertions :=
+	!arr![+interestingIndices+] = +all+
+	!arr![+smallUnsigned+] = +all+
+	!t_arr![+interestingIndices+] = +all+
+	!t_arr![+smallUnsigned+] = +all+
+	+arrays+[+interestingIndices+] = +all+
+	+arrays+[+smallUnsigned+] = +all+
+	+typedArrays+[+interestingIndices+] = +all+
+	+typedArrays+[+smallUnsigned+] = +all+
+
+randomLengthChanges :=
+	!arr!.length = +smallNumbers+
+	!arr!.length = +strings+
+	!arr!.length = +objects+
+	!arr!.length = +arrays+
+	!t_arr!.length = +smallNumbers+
+	!t_arr!.length = +strings+
+	!t_arr!.length = +objects+
+	!t_arr!.length = +arrays+
+	+arrays+.length = +smallNumbers+
+	+arrays+.length = +strings+
+	+arrays+.length = +objects+
+	+arrays+.length = +arrays+
+	+typedArrays+.length = +smallNumbers+
+	+typedArrays+.length = +strings+
+	+typedArrays+.length = +objects+
+	+typedArrays+.length = +arrays+
 
 %%% ##############################################################################################
 %%% ##############################################################################################
