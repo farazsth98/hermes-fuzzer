@@ -50,10 +50,10 @@ numbers :=
 	+floats+
 
 strings :=
-	%range%(a-z)
-	%range%(A-Z)
-	%range%(0-9)
-	%repeat%(+strings+)
+	"%range%(a-z)"
+	"%range%(A-Z)"
+	"%range%(0-9)"
+	"%repeat%(+strings+)"
 
 propertyNames :=
 	%range%(a-z)
@@ -74,9 +74,18 @@ props :=
 objects :=
 	{}
 	{ %repeat%(+props+, ", ") }
+	+arrayBuffers+
+	+dataViews+
+	!obj!
+
+arrayBuffers :=
 	(new ArrayBuffer(+smallUnsigned+))
+	!buf!
+	
+dataViews :=
 	(new DataView(new ArrayBuffer(+smallUnsigned+)))
 	(new DataView(new ArrayBuffer(+smallUnsigned+), +smallUnsigned+, +smallUnsigned+))
+	!dv!
 
 arrays :=
 	[]
@@ -85,10 +94,19 @@ arrays :=
 	[%repeat%(+floats+, ", ")]
 	[%repeat%(+objects+, ", ")]
 	[%repeat%(+arraysCopy+, ", ")]
-	(new +TypedArrayNames+(%repeat%(+integers+, ", ")))
-	(new +TypedArrayNames+(%repeat%(+unsigned+, ", ")))
-	(new +TypedArrayNames+(%repeat%(+floats+, ", ")))
-	(new +TypedArrayNames+(%repeat%(+numbers+, ", ")))
+	!arr!
+
+typedArrays :=
+	(new +TypedArrayNames+([%repeat%(+integers+, ", ")]))
+	(new +TypedArrayNames+([%repeat%(+unsigned+, ", ")]))
+	(new +TypedArrayNames+([%repeat%(+floats+, ", ")]))
+	(new +TypedArrayNames+([%repeat%(+numbers+, ", ")]))
+	(new +TypedArrayNames+(+initializableObjects+))
+	(new +TypedArrayNames+(+objects+))
+	(new +TypedArrayNames+(!buf!))
+	(new +TypedArrayNames+(+arrays+))
+	(new +TypedArrayNames+(+typedArraysCopy+))
+	!t_arr!
 
 %%% To prevent recursion
 
@@ -109,6 +127,22 @@ arraysCopy :=
 	(new +TypedArrayNames+(%repeat%(+unsigned+, ", ")))
 	(new +TypedArrayNames+(%repeat%(+floats+, ", ")))
 	(new +TypedArrayNames+(%repeat%(+numbers+, ", ")))
+	(new +TypedArrayNames+(+initializableObjects+))
+
+typedArraysCopy :=
+	(new +TypedArrayNames+([%repeat%(+integers+, ", ")]))
+	(new +TypedArrayNames+([%repeat%(+unsigned+, ", ")]))
+	(new +TypedArrayNames+([%repeat%(+floats+, ", ")]))
+	(new +TypedArrayNames+([%repeat%(+numbers+, ", ")]))
+	(new +TypedArrayNames+(+initializableObjects+))
+	(new +TypedArrayNames+(+objects+))
+	(new +TypedArrayNames+(+arrays+))
+	!t_arr!
+
+others :=
+	NaN
+	undefined
+	null
 
 all :=
 	+integers+
@@ -117,17 +151,8 @@ all :=
 	+booleans+
 	+objects+
 	+arrays+
-	!str!
-	!obj!
-	!arr!
-	!dv!
-	!buf!
 	+others+
-
-others :=
-	NaN
-	undefined
-	null
+	!str!
 
 sizes :=
 	%range%(0-64)
@@ -556,7 +581,7 @@ defineProperties :=
 	defineProperties(+arrays+, %repeat%({"+propertyNames+": +descriptor+}, ", "))
 
 defineProperty :=
-	defineProperty(+initializableObjects+, "+properties", +descriptor+)
+
 	defineProperty(+objects+, %repeat%(+descriptor+, ", "))
 	defineProperty(+arrays+, %repeat%(+descriptor+, ", "))
 
@@ -595,6 +620,27 @@ TypedArrayNames :=
 	BigInt64Array
 	BigUint64Array
 
+TypedArrayMethods :=
+	+arrayMethods+
+	+subarray+
+	+set+
+
+TypedArrayMethodsForLoop :=
+	+arrayMethodsForLoop+
+	+subarray+
+	+set+
+
+subarray :=
+	subarray()
+	subarray(+smallUnsigned+)
+	subarray(+smallUnsigned+, +smallUnsigned+)
+
+set :=
+	set(+arrays+)
+	set(+arrays+, +smallUnsigned+)
+	set(+typedArrays+)
+	set(+typedArrays+, +smallUnsigned+)
+
 %%% ##############################################################################################
 %%% ##############################################################################################
 %%% ######## Interactions ########
@@ -618,10 +664,6 @@ ArrayInteractions :=
 	!arr![i] = !arr!.+arrayMethods+
 	!arr![i].+arrayMethods+
 	!arr![i] = !arr![i].+arrayMethods+
-	!t_arr!.+arrayMethods+
-	!t_arr![i] = !t_arr!.+arrayMethods+
-	!t_arr![i].+arrayMethods+
-	!t_arr![i] = !t_arr![i].+arrayMethods+
 	!obj!.+arrayMethods+
 	!obj![i] = !obj!.+arrayMethods+
 	!obj![i].+arrayMethods+
@@ -632,14 +674,22 @@ ArrayForLoopInteractions :=
 	!arr![i] = !arr!.+arrayMethodsForLoop+
 	!arr![i].+arrayMethodsForLoop+
 	!arr![i] = !arr![i].+arrayMethodsForLoop+
-	!t_arr!.+arrayMethodsForLoop+
-	!t_arr![i] = !t_arr!.+arrayMethodsForLoop+
-	!t_arr![i].+arrayMethodsForLoop+
-	!t_arr![i] = !t_arr![i].+arrayMethodsForLoop+
 	!obj!.+arrayMethodsForLoop+
 	!obj![i] = !obj!.+arrayMethodsForLoop+
 	!obj![i].+arrayMethodsForLoop+
 	!obj![i] = !obj![i].+arrayMethodsForLoop+
+
+TypedArrayInteractions :=
+	+typedArrays+.+TypedArrayMethods+
+	+typedArrays+[i] = +typedArrays+.+TypedArrayMethods+
+	+typedArrays+[i].+TypedArrayMethods+
+	+typedArrays+[i] = +typedArrays+[i].+TypedArrayMethods+
+
+TypedArrayForLoopInteractions :=
+	+typedArrays+.+TypedArrayMethodsForLoop+
+	+typedArrays+[i] = +typedArrays+.+TypedArrayMethodsForLoop+
+	+typedArrays+[i].+TypedArrayMethodsForLoop+
+	+typedArrays+[i] = +typedArrays+[i].+TypedArrayMethodsForLoop+
 
 ObjectInteractions :=
 	Object.+assign+
@@ -676,6 +726,11 @@ initializableObjects :=
 	!obj!
 	!buf!
 
+allPrototypeMethods :=
+	+arrayMethods+
+	+TypedArrayMethods+
+	+DataViewMethods+
+
 forLoopInit :=
 	for (var i = 0; i < !arr!.length; i++) { !arr![i] = +all+; }
 	for (var i = 0; i < !t_arr!.length; i++) { !t_arr![i] = +all+; }
@@ -690,22 +745,14 @@ forInLoops :=
 	for (var i in +arrays+) { try { i.+DataViewMethods+; } catch (e) {} }
 	
 forOfLoops :=
-	for (var [i, j] of +initializableObjects+.entries()) { try { j.+arrayMethods+; } catch(e) {}}
-	for (var [i, j] of +initializableObjects+.entries()) { try { j.+DataViewMethods+; } catch(e) {}}
-	for (var [i, j] of Object.entries(+initializableObjects+)) { try { j.+arrayMethods+; } catch(e) {}}
-	for (var [i, j] of Object.entries(+initializableObjects+)) { try { j.+DataViewMethods+; } catch(e) {}}
-	for (var i of +initializableObjects+.values()) { try { i.+arrayMethods+; } catch(e) {}}
-	for (var i of +initializableObjects+.values()) { try { i.+DataViewMethods+; } catch(e) {}}
-	for (var i of Object.values(+initializableObjects+)) { try { i.+arrayMethods+; } catch(e) {}}
-	for (var i of Object.values(+initializableObjects+)) { try { i.+DataViewMethods+; } catch(e) {}}
-	for (var [i, j] of +objects+.entries()) { try { j.+arrayMethods+; } catch(e) {}}
-	for (var [i, j] of +arrays+.entries()) { try { j.+DataViewMethods+; } catch(e) {}}
-	for (var [i, j] of Object.entries(+objects+)) { try { j.+arrayMethods+; } catch(e) {}}
-	for (var [i, j] of Object.entries(+arrays+)) { try { j.+DataViewMethods+; } catch(e) {}}
-	for (var i of +objects+.values()) { try { i.+arrayMethods+; } catch(e) {}}
-	for (var i of +arrays+.values()) { try { i.+DataViewMethods+; } catch(e) {}}
-	for (var i of Object.values(+objects+)) { try { i.+arrayMethods+; } catch(e) {}}
-	for (var i of Object.values(+arrays+)) { try { i.+DataViewMethods+; } catch(e) {}}
+	for (var [i, j] of +initializableObjects+.entries()) { try { j.+allPrototypeMethods+; } catch(e) {}}
+	for (var [i, j] of Object.entries(+initializableObjects+)) { try { j.+allPrototypeMethods+; } catch(e) {}}
+	for (var i of +initializableObjects+.values()) { try { i.+allPrototypeMethods+; } catch(e) {}}
+	for (var i of Object.values(+initializableObjects+)) { try { i.+allPrototypeMethods+; } catch(e) {}}
+	for (var [i, j] of +objects+.entries()) { try { j.+allPrototypeMethods+; } catch(e) {}}
+	for (var [i, j] of Object.entries(+objects+)) { try { j.+allPrototypeMethods+; } catch(e) {}}
+	for (var i of +objects+.values()) { try { i.+allPrototypeMethods+; } catch(e) {}}
+	for (var i of Object.values(+objects+)) { try { i.+allPrototypeMethods+; } catch(e) {}}
 
 forLoops :=
 	for (var i = 0; i < +smallUnsigned+; i++) { +forLoopInteractions+ }
@@ -717,11 +764,13 @@ forLoopInteractions :=
 	try { +ArrayForLoopInteractions+; } catch (e) {}
 	try { +DataViewForLoopInteractions+; } catch (e) {}
 	try { +ObjectInteractions+; } catch (e) {}
+	try { +TypedArrayForLoopInteractions+; } catch (e) {}
 
 interactions :=
 	+ArrayInteractions+;
 	+DataViewInteractions+;
 	+ObjectInteractions+;
+	+TypedArrayInteractions+;
 
 wrapper :=
 	try { +interactions+ } catch (e) {}
@@ -738,7 +787,7 @@ wrapper :=
 %section% := variable
 
 str :=
-	try { var @str@ = "+strings+"; } catch (e) {}
+	try { var @str@ = +strings+; } catch (e) {}
 	try { var @str@ = String.fromCharCode(+charCodes+); } catch (e) {}
 	try { var @str@ = String.fromCodePoint(+codePoints+); } catch (e) {}
 
