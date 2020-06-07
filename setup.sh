@@ -5,6 +5,10 @@
 [ ! -d "coverage" ] && mkdir coverage
 [ ! -d "coverage/html" ] && mkdir coverage/html
 
+echo "Please enter password when prompted!"
+
+sudo apt install screen
+
 if [ ! -d "dynamorio" ]
 then
 	echo "Installing DynamoRIO"
