@@ -58,20 +58,19 @@ strings :=
 	"%repeat%(+stringChars+)"
 
 propertyNames :=
-	%range%(a-z)
-	%range%(A-Z)
+	%range%(a-z)%range%(a-z)%range%(a-z)
 
 booleans :=
 	true
 	false
 
 props :=
-	+propertyNames+: +integers+
-    +propertyNames+: +unsigned+
-    +propertyNames+: +floats+
-    +propertyNames+: +numbers+
-    +propertyNames+: +arrays+
-    +propertyNames+: +objects+
+	"+propertyNames+": +integers+
+    "+propertyNames+": +unsigned+
+    "+propertyNames+": +floats+
+    "+propertyNames+": +numbers+
+    "+propertyNames+": +arrays+
+    "+propertyNames+": +objects+
 
 objects :=
 	{}
@@ -309,18 +308,18 @@ genericFuncThreeArgs :=
 	function(c_val, c_index, c_array) { "use strict"; let args = Array.prototype.slice.call(arguments, 1); c_val = args.+arrayMethods+; }
 
 genericFuncFourArgs :=
-	function(acc, cval, c_index, c_array) { c_array[c_index] = c_array.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { c_array[c_index] = c_val.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { let args = Array.prototype.slice.call(arguments, 1); c_array[c_index] = args.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { c_val = c_array.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { c_val = c_val.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { let args = Array.prototype.slice.call(arguments, 1); c_val = args.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { "use strict"; c_array[c_index] = c_array.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { "use strict"; c_array[c_index] = c_val.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { "use strict"; let args = Array.prototype.slice.call(arguments, 1); c_array[c_index] = args.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { "use strict"; c_val = c_array.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { "use strict"; c_val = c_val.+arrayMethods+; }
-	function(acc, cval, c_index, c_array) { "use strict"; let args = Array.prototype.slice.call(arguments, 1); c_val = args.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { c_array[c_index] = c_array.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { c_array[c_index] = c_val.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { let args = Array.prototype.slice.call(arguments, 1); c_array[c_index] = args.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { c_val = c_array.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { c_val = c_val.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { let args = Array.prototype.slice.call(arguments, 1); c_val = args.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { "use strict"; c_array[c_index] = c_array.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { "use strict"; c_array[c_index] = c_val.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { "use strict"; let args = Array.prototype.slice.call(arguments, 1); c_array[c_index] = args.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { "use strict"; c_val = c_array.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { "use strict"; c_val = c_val.+arrayMethods+; }
+	function(acc, c_val, c_index, c_array) { "use strict"; let args = Array.prototype.slice.call(arguments, 1); c_val = args.+arrayMethods+; }
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -374,7 +373,7 @@ JSArrayCallbackMethod :=
 	+find+
 	+findIndex+
 	+flatMap+
-	+forEach+
+	+arrayForEach+
 	+map+
 	+reduce+
 	+reduceRight+
@@ -414,7 +413,7 @@ flatMap :=
 	flatMap(+genericFuncOneArgNumOp+)
 	flatMap(+genericFuncThreeArgs+)
 
-forEach :=
+arrayForEach :=
 	forEach()
 	forEach(+genericEmptyFunc+)
 	forEach(+genericFuncOneArg+)
@@ -679,6 +678,10 @@ freeze :=
 	freeze(+objects+)
 	freeze(+arrays+)
 
+fromEntries :=
+	fromEntries(+maps+)
+	fromEntries(+MapConstructorArguments+)
+
 preventExtensions :=
 	preventExtensions(+initializableObjects+)
 	preventExtensions(+objects+)
@@ -736,35 +739,44 @@ TypedArraySet :=
 %%% ##############################################################################################
 
 MapConstructorArguments :=
-	%repeat%([+propertyNames+, +all+], ", ")
-	%repeat%([+smallUnsigned+, +all+], ", ")
-	%repeat%([+unsigned+, +all+], ", ")
+	[%repeat%(["+propertyNames+", +all+], ", ")]
+	[%repeat%([+smallUnsigned+, +all+], ", ")]
+	[%repeat%([+unsigned+, +all+], ", ")]
 
 MapMethods :=
 	+clear+
 	+mapDelete+
 	+entries+
-%%%	+forEach+
+	+mapForEach+
 	+mapGet+
 	+mapHas+
 	+keys+
 	+mapSet+
 	+values+
 
+MapAccessors :=
+	size
+
 clear :=
 	clear()
 
 mapDelete :=
-	delete(+propertyNames+)
+	delete("+propertyNames+")
+
+mapForEach :=
+	forEach()
+	forEach(+genericEmptyFunc+)
+	forEach(+genericFuncOneArg+)
+	forEach(+genericFuncTwoArgs+)
 
 mapGet :=
-	get(+propertyNames+)
+	get("+propertyNames+")
 
 mapHas :=
-	has(+propertyNames+)
+	has("+propertyNames+")
 
 mapSet :=
-	set(+propertyNames+, +all+)
+	set("+propertyNames+", +all+)
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -822,7 +834,7 @@ ObjectInteractions :=
 	Object.+defineProperty+
 %%%	Object.+entries+
 	Object.+freeze+
-%%%	Object.+fromEntries+
+	Object.+fromEntries+
 %%%	Object.+getOwnPropertyDescriptor+
 %%%	Object.+getOwnPropertyDescriptors+
 %%%	Object.+getOwnPropertyNames+
@@ -840,6 +852,7 @@ ObjectInteractions :=
 
 MapInteractions :=
 	+mapsExpr+.+MapMethods+
+	+mapsExpr+.+MapAccessors+
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -848,7 +861,6 @@ MapInteractions :=
 %%% ##############################################################################################
 
 interestingIndices :=
-	%range%(1050000-2000000)
 	+smallUnsigned+
 
 arrayLikeObjects :=
@@ -895,6 +907,7 @@ allPrototypeMethods :=
 	+arrayMethods+
 	+TypedArrayMethods+
 	+DataViewMethods+
+	+MapMethods+
 
 forLoopInit :=
 	for (var i = 0; i < !arr!.length; i++) { !arr![i] = +all+; }
@@ -931,12 +944,14 @@ forLoopInteractions :=
 	try { +DataViewForLoopInteractions+; } catch (e) {}
 	try { +ObjectInteractions+; } catch (e) {}
 	try { +TypedArrayForLoopInteractions+; } catch (e) {}
+%%%	try { +MapInteractions+; } catch (e) {}
 
 interactions :=
 	+ArrayInteractions+;
 	+DataViewInteractions+;
 	+ObjectInteractions+;
 	+TypedArrayInteractions+;
+	+MapInteractions+;
 	+randomIndexInsertions+;
 	+randomLengthChanges+;
 
@@ -967,6 +982,7 @@ obj :=
 	try { var @obj@ = Object.create(!arr!); } catch (e) {}
 	try { var @obj@ = Object.create(!t_arr!); } catch (e) {}
 	try { var @obj@ = Object.create(!dv!); } catch (e) {}
+	try { var @obj@ = Object.fromEntries(+maps+); } catch (e) {}
 
 arr :=
 	try { var @arr@ = new Array(+sizes+); } catch (e) {}
