@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 
 rm -rf inputs*
-mkdir inputs{1,2,3,4}
 
-screen -S generator1 -dm dharma -grammar grammar/js.dg -storage inputs1/ -format js -count 100000 &
-screen -S generator2 -dm dharma -grammar grammar/js.dg -storage inputs2/ -format js -count 100000 &
-screen -S generator3 -dm dharma -grammar grammar/js.dg -storage inputs3/ -format js -count 100000 &
-screen -S generator4 -dm dharma -grammar grammar/js.dg -storage inputs4/ -format js -count 100000 &
+if echo "$1" | grep -qE '^[0-9]+$'; then
+	if echo "$2" | grep -qE '^[0-9]+$'; then
+		for (( i=1; i<=$1; i++ ))
+		do
+			screen -S generator$i -dm dharma -grammar grammar/js.dg -storage inputs$i/ -format js -count $2 &
+		done
+	else
+		echo "Usage: ./generate.sh <num_of_input_dirs> <num_of_test_cases_per_dir>"
+		exit 1
+	fi
+else
+    echo "Usage: ./generate.sh <num_of_input_dirs> <num_of_test_cases_per_dir>"
+	exit 1
+fi
