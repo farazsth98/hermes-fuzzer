@@ -77,8 +77,9 @@ def main():
 
         try:
             # If your binary requires extra arguments, add them here after the filename
-            child = subprocess.run([BINARY, filename, "-Xhermes-internal-test-methods", 
-                "-Xes6-proxy"], timeout=TIMEOUT, env=env, stdout=FNULL, stderr=subprocess.STDOUT)
+            child = subprocess.run([BINARY, filename, "-Xhermes-internal-test-methods", "-jit",
+                "-jit-crash-on-error", "-Xes6-proxy", "-Xes6-symbol"], timeout=TIMEOUT, env=env, 
+                stdout=FNULL, stderr=FNULL)
             exit_code = child.returncode
 
             if exit_code != 0: # We crashed
@@ -91,7 +92,9 @@ def main():
                 if not get_coverage:
                     continue
                 
-                subprocess.run([DRRUN, "-t", "drcov", "-logdir", "coverage", "--", BINARY, filename])
+                subprocess.run([DRRUN, "-t", "drcov", "-logdir", "coverage", "--", BINARY, "-jit",
+                    "-jit-crash-on-error", "-Xhermes-internal-test-methods", "-Xes6-proxy", 
+                    "-Xes6-symbol", filename])
                 get_coverage = False
 
         except subprocess.TimeoutExpired:
