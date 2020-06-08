@@ -1,6 +1,5 @@
 Add grammar for the following:
 
-* Object methods
 * Reflect methods
 * RegExp objects
 * String objects

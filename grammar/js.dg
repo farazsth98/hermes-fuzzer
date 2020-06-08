@@ -58,7 +58,8 @@ strings :=
 	"%repeat%(+stringChars+)"
 
 propertyNames :=
-	%range%(a-z)%range%(a-z)%range%(a-z)
+%%%	%range%(a-z)%range%(a-z)%range%(a-z)
+	%range%(a-z)%range%(a-z)
 
 booleans :=
 	true
@@ -69,23 +70,28 @@ props :=
     "+propertyNames+": +unsigned+
     "+propertyNames+": +floats+
     "+propertyNames+": +numbers+
-    "+propertyNames+": +arrays+
     "+propertyNames+": +objects+
 
 objects :=
 	{}
 	{ %repeat%(+props+, ", ") }
+	Object.create(+objectsCopy+, { %repeat%(+props+, ", ") })
+	Object.create(+objectsCopy+, { %repeat%("+propertyNames+": +descriptor+, ", ") })
 	+arrayBuffers+
 	+dataViews+
 	+maps+
+	+typedArrays+
 	!obj!
 
 objectsExpr :=
 	var tempObj = {}; tempObj
 	var tempObj = { %repeat%(+props+, ", ") }; tempObj
+	var tempObj = Object.create(+objectsCopy+, { %repeat%(+props+, ", ") }); tempObj
+	var tempObj = Object.create(+objectsCopy+, { %repeat%("+propertyNames+": +descriptor+, ", ") }); tempObj
 	+arrayBuffersExpr+
 	+dataViewsExpr+
 	+mapsExpr+
+	+typedArraysExpr+
 	!obj!
 
 arrayBuffers :=
@@ -181,6 +187,15 @@ typedArraysExpr :=
 	!t_arr!
 
 %%% These copies are to prevent recursion
+
+objectsCopy :=
+	{}
+	{ %repeat%(+props+, ", ") }
+	+arrayBuffers+
+	+dataViews+
+	+maps+
+	+typedArrays+
+	!obj!
 
 arraysCopy :=
 	[]
@@ -354,10 +369,12 @@ arrayMethods :=
 	+JSArrayCallbackMethod+
 	+JSArrayInPlaceMethod+
 	+JSArrayForLoopUnsafe+
+	valueOf()
 
 arrayMethodsForLoop :=
 	+JSArrayCallbackMethod+
 	+JSArrayInPlaceMethod+
+	valueOf()
 
 %%% ########################################
 %%% ######## Methods with callbacks ########
@@ -640,6 +657,7 @@ DataViewMethods :=
 	+DataViewGetMethods+(%range%(0-8), +booleans+)
 	+DataViewSetMethods+(%range%(0-8), +DataViewSetArgs+, +booleans+)
 	+DataViewSetMethods+(%range%(0-8), +DataViewSetArgs+, +others+)
+	valueOf()
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -673,6 +691,8 @@ ObjectMethodNames :=
 assign :=
 	assign(+initializableObjects+, +objects+)
 	assign(+initializableObjects+, %repeat%(+objects+, ", "))
+	assign(+initializableObjects+, +arrays+)
+	assign(+initializableObjects+, %repeat%(+arrays+, ", "))
 
 descriptor :=
 	{ value: +all+, writable: +booleans+, configurable: +booleans+, enumerable: +booleans+ }
@@ -695,6 +715,41 @@ fromEntries :=
 	fromEntries(+maps+)
 	fromEntries(+MapConstructorArguments+)
 
+getOwnPropertyDescriptor :=
+	getOwnPropertyDescriptor(+objects+, "+propertyNames+")
+	getOwnPropertyDescriptor(+arrays+, "+propertyNames+")
+
+getOwnPropertyDescriptors :=
+	getOwnPropertyDescriptors(+objects+)
+	getOwnPropertyDescriptors(+arrays+)
+
+getOwnPropertyNames :=
+	getOwnPropertyNames(+objects+)
+	getOwnPropertyNames(+arrays+)
+
+getOwnPropertySymbols :=
+	getOwnPropertySymbols(+objects+)
+	getOwnPropertySymbols(+arrays+)
+
+getPrototypeOf :=
+	getPrototypeOf(+objects+)
+	getPrototypeOf(+arrays+)
+
+is :=
+	is(+all+, +all+)
+
+isExtensible :=
+	isExtensible(+objects+)
+	isExtensible(+arrays+)
+
+isFrozen :=
+	isFrozen(+objects+)
+	isFrozen(+arrays+)
+
+isSealed :=
+	isSealed(+objects+)
+	isSealed(+arrays+)
+
 preventExtensions :=
 	preventExtensions(+initializableObjects+)
 	preventExtensions(+objects+)
@@ -704,6 +759,10 @@ seal :=
 	seal(+initializableObjects+)
 	seal(+objects+)
 	seal(+arrays+)
+
+setPrototypeOf :=
+	setPrototypeOf(+objects+, +all+)
+	setPrototypeOf(+arrays+, +all+)
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -727,6 +786,7 @@ TypedArrayMethods :=
 	+arrayMethods+
 	+subarray+
 	+TypedArraySet+
+	valueOf()
 
 TypedArrayMethodsForLoop :=
 	+arrayMethodsForLoop+
@@ -766,6 +826,7 @@ MapMethods :=
 	+keys+
 	+mapSet+
 	+values+
+	valueOf()
 
 MapAccessors :=
 	size
@@ -903,7 +964,6 @@ ObjectInteractions :=
 	Object.+assign+
 	Object.+defineProperties+
 	Object.+defineProperty+
-%%%	Object.+entries+
 	Object.+freeze+
 	Object.+fromEntries+
 %%%	Object.+getOwnPropertyDescriptor+
@@ -915,11 +975,9 @@ ObjectInteractions :=
 %%%	Object.+isExtensible+
 %%%	Object.+isFrozen+
 %%%	Object.+isSealed+
-%%%	Object.+keys+
 	Object.+preventExtensions+
 	Object.+seal+
 %%%	Object.+setPrototypeOf+
-%%%	Object.+values+
 
 MapInteractions :=
 	+mapsExpr+.+MapMethods+
@@ -1000,9 +1058,13 @@ forOfLoops :=
 	for (var i of +initializableObjects+.values()) { try { i.+allPrototypeMethods+; } catch(e) {}}
 	for (var i of Object.values(+initializableObjects+)) { try { i.+allPrototypeMethods+; } catch(e) {}}
 	for (var [i, j] of +objects+.entries()) { try { j.+allPrototypeMethods+; } catch(e) {}}
+	for (var [i, j] of +arrays+.entries()) { try { j.+allPrototypeMethods+; } catch(e) {}}
 	for (var [i, j] of Object.entries(+objects+)) { try { j.+allPrototypeMethods+; } catch(e) {}}
+	for (var [i, j] of Object.entries(+arrays+)) { try { j.+allPrototypeMethods+; } catch(e) {}}
 	for (var i of +objects+.values()) { try { i.+allPrototypeMethods+; } catch(e) {}}
+	for (var i of +arrays+.values()) { try { i.+allPrototypeMethods+; } catch(e) {}}
 	for (var i of Object.values(+objects+)) { try { i.+allPrototypeMethods+; } catch(e) {}}
+	for (var i of Object.values(+arrays+)) { try { i.+allPrototypeMethods+; } catch(e) {}}
 
 forLoops :=
 	for (var i = 0; i < +smallUnsigned+; i++) { +forLoopInteractions+ }
@@ -1053,6 +1115,10 @@ obj :=
 	try { var @obj@ = Object.create(null); } catch (e) {}
 	try { var @obj@ = Object.create(null, { %repeat%(+props+, ", ") }); } catch (e) {}
 	try { var @obj@ = Object.create(null, { %repeat%("+propertyNames+": +descriptor+, ", ") }); } catch (e) {}
+	try { var @obj@ = Object.create(+objects+, { %repeat%(+props+, ", ") }); } catch (e) {}
+	try { var @obj@ = Object.create(+arrays+, { %repeat%(+props+, ", ") }); } catch (e) {}
+	try { var @obj@ = Object.create(+objects+, { %repeat%("+propertyNames+": +descriptor+, ", ") }); } catch (e) {}
+	try { var @obj@ = Object.create(+arrays+, { %repeat%("+propertyNames+": +descriptor+, ", ") }); } catch (e) {}
 	try { var @obj@ = Object.create(!str!); } catch (e) {}
 	try { var @obj@ = Object.create(!arr!); } catch (e) {}
 	try { var @obj@ = Object.create(!t_arr!); } catch (e) {}
@@ -1077,8 +1143,8 @@ t_arr :=
 	try { var @t_arr@ = new +TypedArrayNames+(!buf!, +smallUnsigned+, +smallUnsigned+); } catch (e) {}
 	try { var @t_arr@ = new +TypedArrayNames+(!arr!); } catch (e) {}
 	try { var @t_arr@ = new +TypedArrayNames+(!obj!); } catch (e) {}
-	try { var @t_arr@ = new +TypedArrayNames+(+arrays+); } catch (e) {}
 	try { var @t_arr@ = new +TypedArrayNames+(+objects+); } catch (e) {}
+	try { var @t_arr@ = new +TypedArrayNames+(+arrays+); } catch (e) {}
 
 buf :=
 	try { var @buf@ = new ArrayBuffer(+sizes+); } catch (e) {}

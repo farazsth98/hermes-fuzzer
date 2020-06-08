@@ -61,6 +61,9 @@ def main():
     env = os.environ.copy()
     env["ASAN_OPTIONS"] = asan_options
 
+    # /dev/null
+    FNULL = open(os.devnull, 'w')
+
     for f in file_list:
         num += 1
         
@@ -70,13 +73,12 @@ def main():
 
         timeout_percent = float(timeouts) / float(num) * 100.0
         filename = f"./{sys.argv[1]}/{f}"
-        print(f"\r######## Test case {num}: {f} | Timeouts: {timeout_percent}% ########", 
-                end="", flush=True)
+        print(f"######## Test case {num}: {f} | Timeouts: {timeout_percent}% ########")
 
         try:
             # If your binary requires extra arguments, add them here after the filename
             child = subprocess.run([BINARY, filename, "-Xhermes-internal-test-methods", 
-                "-Xes6-proxy"], timeout=TIMEOUT, env=env)
+                "-Xes6-proxy"], timeout=TIMEOUT, env=env, stdout=FNULL, stderr=subprocess.STDOUT)
             exit_code = child.returncode
 
             if exit_code != 0: # We crashed
