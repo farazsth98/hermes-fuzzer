@@ -211,6 +211,8 @@ others :=
 	NaN
 	undefined
 	null
+	Infinity
+	-Infinity
 
 all :=
 	+integers+
