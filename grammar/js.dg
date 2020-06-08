@@ -666,28 +666,6 @@ DataViewMethods :=
 %%% ##############################################################################################
 %%% ##############################################################################################
 
-ObjectMethodNames :=
-	Object.assign
-	Object.defineProperties
-	Object.defineProperty
-	Object.entries
-	Object.freeze
-	Object.fromEntries
-	Object.getOwnPropertyDescriptor
-	Object.getOwnPropertyDescriptors
-	Object.getOwnPropertyNames
-	Object.getOwnPropertySymbols
-	Object.getPrototypeOf
-	Object.is
-	Object.isExtensible
-	Object.isFrozen
-	Object.isSealed
-	Object.keys
-	Object.preventExtensions
-	Object.seal
-	Object.setPrototypeOf
-	Object.values
-
 assign :=
 	assign(+initializableObjects+, +objects+)
 	assign(+initializableObjects+, %repeat%(+objects+, ", "))
@@ -912,6 +890,29 @@ MathInteractions :=
 
 %%% ##############################################################################################
 %%% ##############################################################################################
+%%% ######## Reflect ########
+%%% ### https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect
+%%% ##############################################################################################
+
+%%% ### This is just a placeholder because Reflect is so simple. Search for ReflectInteractions
+
+ReflectMethodNames :=
+	Reflect.apply()
+    Reflect.construct()
+    Reflect.defineProperty()
+    Reflect.deleteProperty()
+    Reflect.get()
+    Reflect.getOwnPropertyDescriptor()
+    Reflect.getPrototypeOf()
+    Reflect.has()
+    Reflect.isExtensible()
+    Reflect.ownKeys()
+    Reflect.preventExtensions()
+    Reflect.set()
+    Reflect.setPrototypeOf()
+
+%%% ##############################################################################################
+%%% ##############################################################################################
 %%% ######## Object specific interactions ########
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -982,6 +983,21 @@ ObjectInteractions :=
 MapInteractions :=
 	+mapsExpr+.+MapMethods+
 	+mapsExpr+.+MapAccessors+
+
+ReflectInteractions :=
+%%%	Reflect.apply
+%%%	Reflect.construct
+	Reflect.+defineProperty+
+	Reflect.deleteProperty(+objects+, "+propertyNames+")
+	Reflect.get(+objects+, "+propertyNames+")
+	Reflect.+getOwnPropertyDescriptor+
+	Reflect.+getPrototypeOf+
+	Reflect.has(+objects+, "+propertyNames+")
+	Reflect.+isExtensible+
+	Reflect.ownKeys(+objects+)
+	Reflect.+preventExtensions+
+	Reflect.set(+objects+, "+propertyNames+", +all+)
+	Reflect.+setPrototypeOf+
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -1076,6 +1092,7 @@ forLoopInteractions :=
 	try { +ArrayForLoopInteractions+; } catch (e) {}
 	try { +DataViewForLoopInteractions+; } catch (e) {}
 	try { +ObjectInteractions+; } catch (e) {}
+	try { +ReflectInteractions+; } catch (e) {}
 	try { +TypedArrayForLoopInteractions+; } catch (e) {}
 	try { +MapInteractions+; } catch (e) {}
 	try { +MathInteractions+; } catch (e) {}
@@ -1084,6 +1101,7 @@ interactions :=
 	+ArrayInteractions+;
 	+DataViewInteractions+;
 	+ObjectInteractions+;
+	+ReflectInteractions+;
 	+TypedArrayInteractions+;
 	+MapInteractions+;
 	+randomIndexInsertions+;

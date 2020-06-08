@@ -1,6 +1,5 @@
 Add grammar for the following:
 
-* Reflect methods
 * RegExp objects
 * String objects
 * WeakMap objects
@@ -8,6 +7,8 @@ Add grammar for the following:
 * eval
 * Date objects
 * Intl methods
+* JSFunctions
+* Reflect apply() and construct() after functions are implemented
 
 Other TODOs:
 
