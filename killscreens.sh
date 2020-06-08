@@ -1,3 +1,8 @@
 #!/usr/bin/env bash
 
-screen -ls | grep Detached | cut -d. -f1 | awk '{print $1}' | xargs kill
+let num_of_input_dirs=`ls -l | grep inputs | wc -l`
+
+for (( i=1; i<=$num_of_input_dirs; i++ ))
+do
+	screen -S fuzzer$i -p 0 -X quit
+done
