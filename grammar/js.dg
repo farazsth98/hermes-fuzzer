@@ -51,8 +51,73 @@ numbers :=
 
 stringChars :=
 	%range%(a-z)
+	[
+	]
+	{
+	}
+	;
+	:
+	\'
+	\"
+	,
+	<
+	.
+	>
+	/
+	?
+	-
+	_
+	=
+	+
+	|
+	\\
+	!
+	@
+	#
+	$
+	%
+	^
+	&
+	*
+	(
+	)
 	%range%(A-Z)
 	%range%(0-9)
+
+regexpLiteralChars :=
+	%range%(a-z)
+	\'
+	\"
+	.
+	?
+	=
+	+
+	|
+	\\
+	!
+	@
+	#
+	$
+	%
+	^
+	&
+	%range%(A-Z)
+	%range%(0-9)
+
+regexpFlags :=
+	g
+	i
+	m
+	s
+	u
+	y
+
+regexpStringArgs :=
+	+strings+
+
+regexpLiteralArgs :=
+	/%repeat%(+regexpLiteralChars+)/
+	/%repeat%(+regexpLiteralChars+)/+regexpFlags+
 
 strings :=
 	"%repeat%(+stringChars+)"
@@ -81,6 +146,7 @@ objects :=
 	+dataViews+
 	+maps+
 	+typedArrays+
+	+regexpObjects+
 	!obj!
 
 objectsExpr :=
@@ -92,7 +158,22 @@ objectsExpr :=
 	+dataViewsExpr+
 	+mapsExpr+
 	+typedArraysExpr+
+	+regexpObjectsExpr+
 	!obj!
+
+regexpObjects :=
+	new RegExp(+regexpStringArgs+)
+	new RegExp(+regexpStringArgs+, "+regexpFlags+")
+%%%	new RegExp(+regexpLiteralArgs+)
+%%%	new RegExp(+regexpLiteralArgs+, "+regexpFlags+")
+	!regexp!
+
+regexpObjectsExpr :=
+	var tempRegexpObj = new RegExp(+regexpStringArgs+); tempRegexpObj
+	var tempRegexpObj = new RegExp(+regexpStringArgs+, "+regexpFlags+"); tempRegexpObj
+%%%	var tempRegexpObj = new RegExp(+regexpLiteralArgs+); tempRegexpObj
+%%%	var tempRegexpObj = new RegExp(+regexpLiteralArgs+, "+regexpFlags+"); tempRegexpObj
+	!regexp!
 
 arrayBuffers :=
 	(new ArrayBuffer(+smallUnsigned+))
@@ -240,6 +321,7 @@ all :=
 	+maps+
 	+dataViews+
 	+arrayBuffers+
+	+regexpObjects+
 	+others+
 	+MathConstants+
 	!str!
@@ -913,6 +995,47 @@ ReflectMethodNames :=
 
 %%% ##############################################################################################
 %%% ##############################################################################################
+%%% ######## RegExp ########
+%%% ### https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
+%%% ##############################################################################################
+
+RegExpPrototypeVariables :=
+	dotAll
+	flags
+	global
+	ignoreCase
+	multiline
+	source
+	sticky
+	unicode
+	lastIndex
+
+RegExpPrototypeMethods :=
+	test(+strings+)
+	test(+objects+)
+	exec(+strings+)
+	exec(+objects+)
+
+RegExpSymbolMethods :=
+	[Symbol.match](+strings+)
+	[Symbol.match](+objects+)
+	[Symbol.replace](+strings+)
+	[Symbol.replace](+objects+)
+	[Symbol.search](+strings+)
+	[Symbol.search](+objects+)
+	[Symbol.split](+strings+)
+	[Symbol.split](+objects+)
+
+RegExpStaticVariables :=
+	RegExp.input
+	RegExp.$%range%(1-9)
+	RegExp.lastMatch
+	RegExp.lastParen
+	RegExp.leftContext
+	RegExp.rightContext
+
+%%% ##############################################################################################
+%%% ##############################################################################################
 %%% ######## Object specific interactions ########
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -938,6 +1061,10 @@ ArrayInteractions :=
 	!obj![i] = !obj!.+arrayMethods+
 	!obj![i].+arrayMethods+
 	!obj![i] = !obj![i].+arrayMethods+
+	!regexp!.+arrayMethods+
+	!regexp![i] = !regexp!.+arrayMethods+
+	!regexp![i].+arrayMethods+
+	!regexp![i] = !regexp![i].+arrayMethods+
 
 ArrayForLoopInteractions :=
 	!arr!.+arrayMethodsForLoop+
@@ -948,6 +1075,10 @@ ArrayForLoopInteractions :=
 	!obj![i] = !obj!.+arrayMethodsForLoop+
 	!obj![i].+arrayMethodsForLoop+
 	!obj![i] = !obj![i].+arrayMethodsForLoop+
+	!regexp!.+arrayMethodsForLoop+
+	!regexp![i] = !regexp!.+arrayMethodsForLoop+
+	!regexp![i].+arrayMethodsForLoop+
+	!regexp![i] = !regexp![i].+arrayMethodsForLoop+
 
 TypedArrayInteractions :=
 	+typedArraysExpr+.+TypedArrayMethods+
@@ -999,6 +1130,12 @@ ReflectInteractions :=
 	Reflect.set(+objects+, "+propertyNames+", +all+)
 	Reflect.+setPrototypeOf+
 
+RegExpInteractions :=
+	+regexpObjectsExpr+.+RegExpPrototypeVariables+
+	+regexpObjectsExpr+.+RegExpPrototypeMethods+
+	+regexpObjectsExpr++RegExpSymbolMethods+
+	RegExp.+RegExpStaticVariables+
+
 %%% ##############################################################################################
 %%% ##############################################################################################
 %%% ######## Random Array-like Operations ########
@@ -1047,12 +1184,14 @@ initializableObjects :=
 	!obj!
 	!buf!
 	!map!
+	!regexp!
 
 allPrototypeMethods :=
 	+arrayMethods+
 	+TypedArrayMethods+
 	+DataViewMethods+
 	+MapMethods+
+	+RegExpPrototypeVariables+
 
 forLoopInit :=
 	for (var i = 0; i < !arr!.length; i++) { !arr![i] = +all+; }
@@ -1061,6 +1200,7 @@ forLoopInit :=
 	for (var i = 0; i < !obj!.length; i++) { !obj![i] = +all+; }
 	for (var i = 0; i < !buf!.length; i++) { !buf![i] = +all+; }
 	for (var i = 0; i < !map!.length; i++) { !map![i] = +all+; }
+	for (var i = 0; i < !regexp!.length; i++) { !regexp![i] = +all+; }
 	for (var i = 0; i < +smallUnsigned+; i++) { +initializableObjects+[i] = +all+; }
 
 forInLoops :=
@@ -1096,6 +1236,7 @@ forLoopInteractions :=
 	try { +TypedArrayForLoopInteractions+; } catch (e) {}
 	try { +MapInteractions+; } catch (e) {}
 	try { +MathInteractions+; } catch (e) {}
+	try { +RegExpInteractions+; } catch (e) {}
 
 interactions :=
 	+ArrayInteractions+;
@@ -1107,6 +1248,7 @@ interactions :=
 	+randomIndexInsertions+;
 	+randomLengthChanges+;
 	+MathInteractions+;
+	+RegExpInteractions+;
 
 wrapper :=
 	try { +interactions+ } catch (e) {}
@@ -1173,6 +1315,12 @@ dv :=
 
 map :=
 	try { var @map@ = new Map(+MapConstructorArguments+); } catch (e) {}
+
+regexp :=
+	try { var @regexp@ = new RegExp(+regexpStringArgs+); } catch (e) {}
+	try { var @regexp@ = new RegExp(+regexpStringArgs+, "+regexpFlags+"); } catch (e) {}
+%%%	try { var @regexp@ = new RegExp(+regexpLiteralArgs+); } catch (e) {}
+%%%	try { var @regexp@ = new RegExp(+regexpLiteralArgs+, "+regexpFlags+"); } catch (e) {}
 
 %%% ###########################################################################
 %%% ###########################################################################

@@ -1,6 +1,6 @@
 Add grammar for the following:
 
-* RegExp objects
+* Make RegExp expressions semantically correct (kinda hard...)
 * String objects
 * WeakMap objects
 * WeakSet objects
