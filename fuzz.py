@@ -30,6 +30,36 @@ def check_setup():
         print("ERROR: DynamoRIO was not installed correctly. Please run ./install-dynamorio.sh")
         sys.exit(1)
 
+def triage_crash(crash_msg, crash_file):
+    unique_msg = b"" # A message unique to this crash
+
+    # Check for use after poisons
+    if b"use-after-poison" in crash_msg:
+        for line in crash_msg.split(b"\n"):
+            if line.strip().startswith(b"#0"):
+                unique_msg = line.strip().split(b" ")
+                break
+        call_stack_msg = unique_msg[1][-3:] + b" " + unique_msg[3]
+        
+        # First ensure the call_stacks.log file actually exists
+        open("logs/call_stacks.log", "a+").close()
+
+        # If the crash is unique, this msg will not be in call_stacks.log file
+        with open("logs/call_stacks.log", "rb+") as f:
+            call_stacks = f.read().split(b"\n")
+            if call_stack_msg not in call_stacks:
+                f.write(call_stack_msg + b"\n")
+                filename = f"uap_{str(unique_msg[1], 'utf-8')}.js"
+                print(f"Unique use-after-poison crash found! Saved as {filename}")
+                shutil.move(crash_file, f"./crashes/uaps/{filename}")
+            else:
+                print("Use-after-poison crash found but it wasn't unique.")
+    # I will add in each type of crash as I find them
+    else:
+        filename = crash_file.split("/")[-1]
+        print("Found a crash that cannot be classified. Saved as {filename}")
+        shutil.move(crash_file, f"./crashes/{filename}")
+
 def main():
     check_setup()
 
@@ -50,9 +80,6 @@ def main():
         print(f"Error: directory {input_dir} does not exist")
         sys.exit(1)
 
-    # Used to name crash and timeout test cases
-    crashes = timeouts = num = timeout_percent = 0
-
     # Used to determine when to gather code coverage data
     get_coverage = False
 
@@ -63,6 +90,9 @@ def main():
 
     # /dev/null
     FNULL = open(os.devnull, 'w')
+
+    # Used for test case number tracking and timeout percentage
+    num = timeouts = 0
 
     for f in file_list:
         num += 1
@@ -79,14 +109,13 @@ def main():
             # If your binary requires extra arguments, add them here after the filename
             child = subprocess.run([BINARY, filename, "-Xhermes-internal-test-methods", "-jit",
                 "-jit-crash-on-error", "-Xes6-proxy", "-Xes6-symbol"], timeout=TIMEOUT, env=env, 
-                stdout=FNULL, stderr=FNULL)
+                stdout=FNULL, stderr=subprocess.PIPE)
             exit_code = child.returncode
 
             if exit_code != 0: # We crashed
-                crashes += 1
-                crash_file = f"crash{crashes}.js"
-                print(f"\nCrashed. Saved as {crash_file}")
-                shutil.copyfile(filename, f"./crashes/n{node_num}_{crash_file}")
+                # Figure out if the crash is unique
+                output = child.stderr
+                triage_crash(output, filename)
             else:
                 # We only want to gather coverage for non-crashing test cases
                 if not get_coverage:
