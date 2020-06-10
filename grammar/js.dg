@@ -118,6 +118,9 @@ props :=
 objects :=
 	{}
 	{ %repeat%(+props+, ", ") }
+	(new Object(null))
+	(new Object(undefined))
+	(new Object(+objectsCopy))
 	Object.create(+objectsCopy+, { %repeat%(+props+, ", ") })
 	Object.create(+objectsCopy+, { %repeat%("+propertyNames+": +descriptor+, ", ") })
 	+arrayBuffers+
@@ -131,6 +134,9 @@ objects :=
 objectsExpr :=
 	var tempObj = {}; tempObj
 	var tempObj = { %repeat%(+props+, ", ") }; tempObj
+	var tempObj = (new Object(null)); tempObj
+	var tempObj = (new Object(undefined)); tempObj
+	var tempObj = (new Object(+objectsCopy)); tempObj
 	var tempObj = Object.create(+objectsCopy+, { %repeat%(+props+, ", ") }); tempObj
 	var tempObj = Object.create(+objectsCopy+, { %repeat%("+propertyNames+": +descriptor+, ", ") }); tempObj
 	+arrayBuffersExpr+
@@ -251,6 +257,10 @@ typedArraysExpr :=
 objectsCopy :=
 	{}
 	{ %repeat%(+props+, ", ") }
+	(new Object())
+	(new Object(null))
+	(new Object(undefined))
+	Object.create(null)
 	+arrayBuffers+
 	+dataViews+
 	+maps+
@@ -574,9 +584,8 @@ JSArrayInPlaceMethodNames :=
 	reverse
 	shift
 	slice
-%%%	toLocaleString
 	toString
-%%%	values
+	values
 
 JSArrayInPlaceMethod :=
 	+copyWithin+
@@ -592,9 +601,7 @@ JSArrayInPlaceMethod :=
 	+reverse+
 	+shift+
 	+slice+
-%%%	+toLocaleString+
-	+toString+
-%%%	+values+
+	+values+
 
 %%% #################################
 %%% ######## Implementations ########
@@ -668,9 +675,6 @@ splice :=
 	splice(+smallUnsigned+, +smallUnsigned+)
 	splice(+smallUnsigned+, +smallUnsigned+, %repeat%(+all+, ", "))
 
-toString :=
-	toString()
-	toString(%repeat%(+all+, ", "))
 
 unshift :=
 	unshift()
@@ -802,6 +806,34 @@ seal :=
 setPrototypeOf :=
 	setPrototypeOf(+objects+, +all+)
 	setPrototypeOf(+arrays+, +all+)
+
+ObjectPrototypeMethods :=
+	+hasOwnProperty+
+	+isPrototypeOf+
+	+propertyIsEnumerable+
+	+toLocaleString+
+	+toString+
+
+hasOwnProperty :=
+	hasOwnProperty("+propertyNames+")
+	hasOwnProperty(+all+)
+	hasOwnProperty(%repeat%(+all+, ", "))
+
+isPrototypeOf :=
+	isPrototypeOf(+all+)
+	isPrototypeOf(%repeat%(+all+, ", "))
+
+propertyIsEnumerable :=
+	propertyIsEnumerable(+all+)
+	propertyIsEnumerable(%repeat%(+all+, ", "))
+
+toLocaleString :=
+	toLocaleString()
+	toLocaleString(%repeat%(+all+, ", "))
+
+toString :=
+	toString()
+	toString(%repeat%(+all+, ", "))
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -1105,18 +1137,19 @@ ObjectInteractions :=
 	Object.+defineProperty+
 	Object.+freeze+
 	Object.+fromEntries+
-%%%	Object.+getOwnPropertyDescriptor+
-%%%	Object.+getOwnPropertyDescriptors+
-%%%	Object.+getOwnPropertyNames+
-%%%	Object.+getOwnPropertySymbols+
-%%%	Object.+getPrototypeOf+
-%%%	Object.+is+
-%%%	Object.+isExtensible+
-%%%	Object.+isFrozen+
-%%%	Object.+isSealed+
+	Object.+getOwnPropertyDescriptor+
+	Object.+getOwnPropertyDescriptors+
+	Object.+getOwnPropertyNames+
+	Object.+getOwnPropertySymbols+
+	Object.+getPrototypeOf+
+	Object.+is+
+	Object.+isExtensible+
+	Object.+isFrozen+
+	Object.+isSealed+
 	Object.+preventExtensions+
 	Object.+seal+
-%%%	Object.+setPrototypeOf+
+	Object.+setPrototypeOf+
+	+initializableObjects+.+ObjectPrototypeMethods+
 
 MapInteractions :=
 	+mapsExpr+.+MapMethods+
@@ -1279,6 +1312,11 @@ str :=
 obj :=
 	try { var @obj@ = {}; } catch (e) {}
 	try { var @obj@ = {%repeat%("+propertyNames+": +all+, ", ")}; } catch (e) {}
+	try { var @obj@ = new Object() } catch (e) {}
+	try { var @obj@ = new Object(null) } catch (e) {}
+	try { var @obj@ = new Object(undefined) } catch (e) {}
+	try { var @obj@ = new Object(+objects+) } catch (e) {}
+	try { var @obj@ = new Object(+arrays+) } catch (e) {}
 	try { var @obj@ = Object.create(null); } catch (e) {}
 	try { var @obj@ = Object.create(null, { %repeat%(+props+, ", ") }); } catch (e) {}
 	try { var @obj@ = Object.create(null, { %repeat%("+propertyNames+": +descriptor+, ", ") }); } catch (e) {}
