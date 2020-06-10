@@ -49,6 +49,10 @@ numbers :=
 	+unsigned+
 	+floats+
 
+hexChars :=
+	%range%(0-9)
+	%range%(A-F)
+
 stringChars :=
 	%range%(a-z)
 	[
@@ -83,34 +87,7 @@ stringChars :=
 	)
 	%range%(A-Z)
 	%range%(0-9)
-
-regexpLiteralChars :=
-	%range%(a-z)
-	\'
-	\"
-	.
-	?
-	=
-	+
-	|
-	\\
-	!
-	@
-	#
-	$
-	%
-	^
-	&
-	%range%(A-Z)
-	%range%(0-9)
-
-regexpFlags :=
-	g
-	i
-	m
-	s
-	u
-	y
+	\u+hexChars++hexChars++hexChars++hexChars+
 
 regexpStringArgs :=
 	+strings+
@@ -136,6 +113,7 @@ props :=
     "+propertyNames+": +floats+
     "+propertyNames+": +numbers+
     "+propertyNames+": +objects+
+    "+propertyNames+": +all+
 
 objects :=
 	{}
@@ -147,6 +125,7 @@ objects :=
 	+maps+
 	+typedArrays+
 	+regexpObjects+
+	+strings+
 	!obj!
 
 objectsExpr :=
@@ -1033,6 +1012,34 @@ RegExpStaticVariables :=
 	RegExp.lastParen
 	RegExp.leftContext
 	RegExp.rightContext
+
+regexpLiteralChars :=
+	%range%(a-z)
+	\'
+	\"
+	.
+	?
+	=
+	+
+	|
+	\\
+	!
+	@
+	#
+	$
+	%
+	^
+	&
+	%range%(A-Z)
+	%range%(0-9)
+
+regexpFlags :=
+	g
+	i
+	m
+	s
+	u
+	y
 
 %%% ##############################################################################################
 %%% ##############################################################################################
