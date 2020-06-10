@@ -149,6 +149,9 @@ objectsExpr :=
 regexpObjects :=
 	new RegExp(+regexpStringArgs+)
 	new RegExp(+regexpStringArgs+, "+regexpFlags+")
+	new RegExp(+all+)
+	new RegExp(+all+, "+regexpFlags+")
+	new RegExp(+all+, "+all+")
 %%%	new RegExp(+regexpLiteralArgs+)
 %%%	new RegExp(+regexpLiteralArgs+, "+regexpFlags+")
 	!regexp!
@@ -1364,6 +1367,9 @@ map :=
 regexp :=
 	try { var @regexp@ = new RegExp(+regexpStringArgs+); } catch (e) {}
 	try { var @regexp@ = new RegExp(+regexpStringArgs+, "+regexpFlags+"); } catch (e) {}
+	try { var @regexp@ = new RegExp(+all+); } catch (e) {}
+	try { var @regexp@ = new RegExp(+all+, "+regexpFlags+"); } catch (e) {}
+	try { var @regexp@ = new RegExp(+all+, "+all+"); } catch (e) {}
 %%%	try { var @regexp@ = new RegExp(+regexpLiteralArgs+); } catch (e) {}
 %%%	try { var @regexp@ = new RegExp(+regexpLiteralArgs+, "+regexpFlags+"); } catch (e) {}
 
