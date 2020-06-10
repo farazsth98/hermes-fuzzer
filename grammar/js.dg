@@ -120,9 +120,9 @@ objects :=
 	{ %repeat%(+props+, ", ") }
 	(new Object(null))
 	(new Object(undefined))
-	(new Object(+objectsCopy))
-	Object.create(+objectsCopy+, { %repeat%(+props+, ", ") })
-	Object.create(+objectsCopy+, { %repeat%("+propertyNames+": +descriptor+, ", ") })
+	(new Object(+objectsCopy+))
+	(Object.create(+objectsCopy+, { %repeat%(+props+, ", ") }))
+	(Object.create(+objectsCopy+, { %repeat%("+propertyNames+": +descriptor+, ", ") }))
 	+arrayBuffers+
 	+dataViews+
 	+maps+
@@ -151,7 +151,7 @@ regexpObjects :=
 	new RegExp(+regexpStringArgs+, "+regexpFlags+")
 	new RegExp(+all+)
 	new RegExp(+all+, "+regexpFlags+")
-	new RegExp(+all+, "+all+")
+	new RegExp(+all+, +all+)
 %%%	new RegExp(+regexpLiteralArgs+)
 %%%	new RegExp(+regexpLiteralArgs+, "+regexpFlags+")
 	!regexp!
@@ -165,6 +165,7 @@ regexpObjectsExpr :=
 
 arrayBuffers :=
 	(new ArrayBuffer(+smallUnsigned+))
+	(new ArrayBuffer(+objects+))
 	!buf!
 
 arrayBuffersExpr :=
@@ -263,8 +264,8 @@ objectsCopy :=
 	(new Object())
 	(new Object(null))
 	(new Object(undefined))
-	Object.create(null)
-	+arrayBuffers+
+	(Object.create(null))
+	+arrayBuffersCopy+
 	+dataViews+
 	+maps+
 	+typedArrays+
@@ -295,12 +296,17 @@ typedArraysCopy :=
 	(new +TypedArrayNames+(+arrays+))
 	!t_arr!
 
+arrayBuffersCopy :=
+	(new ArrayBuffer(+smallUnsigned+))
+	!buf!
+
 others :=
 	NaN
 	undefined
 	null
 	Infinity
 	-Infinity
+	+arrayBuffers+.byteLength
 
 all :=
 	+integers+
@@ -342,12 +348,16 @@ threeFloatArgs :=
 
 %%% ##############################################################################################
 %%% ##############################################################################################
-%%% ######## Callback Functions ########
+%%% ######## Generic Functions ########
 %%% ##############################################################################################
 %%% ##############################################################################################
 
 genericEmptyFunc :=
 	function() {}
+
+%%% ####################################
+%%% ######## Callback Functions ########
+%%% ####################################
 
 genericFuncOneArg :=
 	function(element) { element.+allPrototypeMethods+; }
@@ -423,6 +433,22 @@ genericFuncFourArgs :=
 	function(acc, c_val, c_index, c_array) { "use strict"; c_val = c_val.+arrayMethods+; }
 	function(acc, c_val, c_index, c_array) { "use strict"; let args = Array.prototype.slice.call(arguments, 1); c_val = args.+arrayMethods+; }
 
+%%% #############################################
+%%% ######## Getter and Setter functions ########
+%%% #############################################
+
+genericFuncGetters :=
+	function() { return +all+; }
+	function() { return +smallNumbers+; }
+	function() { return +numbers+; }
+	function() { this.+allPrototypeMethods+; }
+
+genericFuncSetters :=
+	function(val) { this.+propertyNames+ = val; }
+	function(val) { this[+smallIntegers+] = val; }
+	function(val) { this[+smallNumbers+] = val; }
+	function(val) { this.+allPrototypeMethods+; }
+
 %%% ##############################################################################################
 %%% ##############################################################################################
 %%% ######## JSArrays ########
@@ -443,12 +469,10 @@ arrayMethods :=
 	+JSArrayCallbackMethod+
 	+JSArrayInPlaceMethod+
 	+JSArrayForLoopUnsafe+
-	valueOf()
 
 arrayMethodsForLoop :=
 	+JSArrayCallbackMethod+
 	+JSArrayInPlaceMethod+
-	valueOf()
 
 %%% ########################################
 %%% ######## Methods with callbacks ########
@@ -671,12 +695,16 @@ slice :=
 	slice()
 	slice(+smallUnsigned+)
 	slice(+smallUnsigned+, +smallUnsigned+)
+	slice(+all+)
+	slice(+all+, +all+)
 
 splice :=
 	splice()
 	splice(+smallUnsigned+)
 	splice(+smallUnsigned+, +smallUnsigned+)
+	splice(0, +smallUnsigned+)
 	splice(+smallUnsigned+, +smallUnsigned+, %repeat%(+all+, ", "))
+	splice(0, +smallUnsigned+, %repeat%(+all+, ", "))
 
 
 unshift :=
@@ -687,6 +715,17 @@ values :=
 	values()
 	values(%repeat%(+all+, ", "))
 	
+%%% ##############################################################################################
+%%% ##############################################################################################
+%%% ######## ArrayBufffers ########
+%%% ### https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+%%% ##############################################################################################
+%%% ##############################################################################################
+
+ArrayBufferPrototypeMethods :=
+	slice(+smallIntegers+)
+	slice(+smallUnsigned+, +smallUnsigned+)
+
 %%% ##############################################################################################
 %%% ##############################################################################################
 %%% ######## DataViews ########
@@ -725,7 +764,6 @@ DataViewMethods :=
 	+DataViewGetMethods+(%range%(0-8), +booleans+)
 	+DataViewSetMethods+(%range%(0-8), +DataViewSetArgs+, +booleans+)
 	+DataViewSetMethods+(%range%(0-8), +DataViewSetArgs+, +others+)
-	valueOf()
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -807,8 +845,8 @@ seal :=
 	seal(+arrays+)
 
 setPrototypeOf :=
-	setPrototypeOf(+objects+, +all+)
-	setPrototypeOf(+arrays+, +all+)
+	setPrototypeOf(+initializableObjects+, +objects+)
+	setPrototypeOf(+initializableObjects+, +arrays+)
 
 ObjectPrototypeMethods :=
 	+hasOwnProperty+
@@ -816,6 +854,11 @@ ObjectPrototypeMethods :=
 	+propertyIsEnumerable+
 	+toLocaleString+
 	+toString+
+	+defineGetter+
+	+defineSetter+
+	+lookupGetter+
+	+lookupSetter+
+	valueOf()
 
 hasOwnProperty :=
 	hasOwnProperty("+propertyNames+")
@@ -837,6 +880,22 @@ toLocaleString :=
 toString :=
 	toString()
 	toString(%repeat%(+all+, ", "))
+
+defineGetter :=
+	__defineGetter__(+smallNumbers+, +genericFuncGetters+)
+	__defineGetter__("+propertyNames+", +genericFuncGetters+)
+
+defineSetter :=
+	__defineSetter__(+smallNumbers+, +genericFuncSetters+)
+	__defineSetter__("+propertyNames+", +genericFuncSetters+)
+
+lookupGetter :=
+	__lookupGetter__("+propertyNames+")
+	__lookupGetter__("+numbers+")
+
+lookupSetter :=
+	__lookupSetter__("+propertyNames+")
+	__lookupSetter__("+numbers+")
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -860,7 +919,6 @@ TypedArrayMethods :=
 	+arrayMethods+
 	+subarray+
 	+TypedArraySet+
-	valueOf()
 
 TypedArrayMethodsForLoop :=
 	+arrayMethodsForLoop+
@@ -873,10 +931,10 @@ subarray :=
 	subarray(+smallUnsigned+, +smallUnsigned+)
 
 TypedArraySet :=
-	TypedArraySet(+arrays+)
-	TypedArraySet(+arrays+, +smallUnsigned+)
-	TypedArraySet(+typedArrays+)
-	TypedArraySet(+typedArrays+, +smallUnsigned+)
+	set(+arrays+)
+	set(+arrays+, +smallUnsigned+)
+	set(+typedArrays+)
+	set(+typedArrays+, +smallUnsigned+)
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -900,7 +958,6 @@ MapMethods :=
 	+keys+
 	+mapSet+
 	+values+
-	valueOf()
 
 MapAccessors :=
 	size
@@ -941,48 +998,6 @@ MathConstants :=
 	Math.PI
 	Math.SQRT1_2
 	Math.SQRT2
-
-MathInteractions :=
-	Math.abs(+all+)
-	Math.acos(+all+)
-	Math.acosh(+all+)
-	Math.asin(+all+)
-	Math.asinh(+all+)
-	Math.atan(+all+)
-	Math.atan2(+all+, +all+)
-	Math.atanh(+all+)
-	Math.cbrt(+all+)
-	Math.ceil(+all+)
-	Math.clz32(+all+)
-	Math.cos(+all+)
-	Math.cosh(+all+)
-	Math.exp(+all+)
-	Math.expm1(+all+)
-	Math.floor(+all+)
-	Math.fround(+all+)
-	Math.hypot()
-	Math.hypot(+all+)
-	Math.hypot(%repeat%(+all+, ", "))
-	Math.imul(+all+, +all+)
-	Math.log(+all+)
-	Math.log10(+all+)
-	Math.log1p(+all+)
-	Math.log2(+all+)
-	Math.max(+all+)
-	Math.max(%repeat%(+all+, ", "))
-	Math.min(+all+)
-	Math.min(%repeat%(+all+, ", "))
-	Math.pow(+all+, +all+)
-	Math.random()
-	Math.random(+all+)
-	Math.round(+all+)
-	Math.sign(+all+)
-	Math.sin(+all+)
-	Math.sinh(+all+)
-	Math.sqrt(+all+)
-	Math.tan(+all+)
-	Math.tanh(+all+)
-	Math.trunc(+all+)
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -1107,6 +1122,7 @@ ArrayInteractions :=
 	!regexp![i] = !regexp!.+arrayMethods+
 	!regexp![i].+arrayMethods+
 	!regexp![i] = !regexp![i].+arrayMethods+
+	Array.isArray(+all+)
 
 ArrayForLoopInteractions :=
 	!arr!.+arrayMethodsForLoop+
@@ -1121,6 +1137,7 @@ ArrayForLoopInteractions :=
 	!regexp![i] = !regexp!.+arrayMethodsForLoop+
 	!regexp![i].+arrayMethodsForLoop+
 	!regexp![i] = !regexp![i].+arrayMethodsForLoop+
+	Array.isArray(+all+)
 
 TypedArrayInteractions :=
 	+typedArraysExpr+.+TypedArrayMethods+
@@ -1133,6 +1150,14 @@ TypedArrayForLoopInteractions :=
 	+typedArraysExpr+[i] = +typedArrays+.+TypedArrayMethodsForLoop+
 	+typedArraysExpr+[i].+TypedArrayMethodsForLoop+
 	+typedArraysExpr+[i] = +typedArrays+[i].+TypedArrayMethodsForLoop+
+
+ArrayBufferInteractions :=
+	!buf!.+ArrayBufferPrototypeMethods+
+	+arrayBuffersExpr+.+ArrayBufferPrototypeMethods+
+	ArrayBuffer.isView(+objects+)
+	ArrayBuffer.isView(+typedArrays+)
+	ArrayBuffer.isView(+dataViews+)
+	ArrayBuffer[Symbol.species]
 
 ObjectInteractions :=
 	Object.+assign+
@@ -1152,7 +1177,8 @@ ObjectInteractions :=
 	Object.+preventExtensions+
 	Object.+seal+
 	Object.+setPrototypeOf+
-	+initializableObjects+.+ObjectPrototypeMethods+
+	+initializableObjects+.+allPrototypeMethods+
+	+objectsExpr+.+allPrototypeMethods+
 
 MapInteractions :=
 	+mapsExpr+.+MapMethods+
@@ -1173,11 +1199,53 @@ ReflectInteractions :=
 	Reflect.set(+objects+, "+propertyNames+", +all+)
 	Reflect.+setPrototypeOf+
 
+MathInteractions :=
+	Math.abs(+all+)
+	Math.acos(+all+)
+	Math.acosh(+all+)
+	Math.asin(+all+)
+	Math.asinh(+all+)
+	Math.atan(+all+)
+	Math.atan2(+all+, +all+)
+	Math.atanh(+all+)
+	Math.cbrt(+all+)
+	Math.ceil(+all+)
+	Math.clz32(+all+)
+	Math.cos(+all+)
+	Math.cosh(+all+)
+	Math.exp(+all+)
+	Math.expm1(+all+)
+	Math.floor(+all+)
+	Math.fround(+all+)
+	Math.hypot()
+	Math.hypot(+all+)
+	Math.hypot(%repeat%(+all+, ", "))
+	Math.imul(+all+, +all+)
+	Math.log(+all+)
+	Math.log10(+all+)
+	Math.log1p(+all+)
+	Math.log2(+all+)
+	Math.max(+all+)
+	Math.max(%repeat%(+all+, ", "))
+	Math.min(+all+)
+	Math.min(%repeat%(+all+, ", "))
+	Math.pow(+all+, +all+)
+	Math.random()
+	Math.random(+all+)
+	Math.round(+all+)
+	Math.sign(+all+)
+	Math.sin(+all+)
+	Math.sinh(+all+)
+	Math.sqrt(+all+)
+	Math.tan(+all+)
+	Math.tanh(+all+)
+	Math.trunc(+all+)
+
 RegExpInteractions :=
 	+regexpObjectsExpr+.+RegExpPrototypeVariables+
 	+regexpObjectsExpr+.+RegExpPrototypeMethods+
 	+regexpObjectsExpr++RegExpSymbolMethods+
-	RegExp.+RegExpStaticVariables+
+	+RegExpStaticVariables+
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -1235,6 +1303,8 @@ allPrototypeMethods :=
 	+DataViewMethods+
 	+MapMethods+
 	+RegExpPrototypeVariables+
+	+ObjectPrototypeMethods+
+	+ArrayBufferPrototypeMethods+
 
 forLoopInit :=
 	for (var i = 0; i < !arr!.length; i++) { !arr![i] = +all+; }
@@ -1280,6 +1350,7 @@ forLoopInteractions :=
 	try { +MapInteractions+; } catch (e) {}
 	try { +MathInteractions+; } catch (e) {}
 	try { +RegExpInteractions+; } catch (e) {}
+	try { +ArrayBufferInteractions+; } catch (e) {}
 
 interactions :=
 	+ArrayInteractions+;
@@ -1292,6 +1363,7 @@ interactions :=
 	+randomLengthChanges+;
 	+MathInteractions+;
 	+RegExpInteractions+;
+	+ArrayBufferInteractions+; 
 
 wrapper :=
 	try { +interactions+ } catch (e) {}
@@ -1369,7 +1441,7 @@ regexp :=
 	try { var @regexp@ = new RegExp(+regexpStringArgs+, "+regexpFlags+"); } catch (e) {}
 	try { var @regexp@ = new RegExp(+all+); } catch (e) {}
 	try { var @regexp@ = new RegExp(+all+, "+regexpFlags+"); } catch (e) {}
-	try { var @regexp@ = new RegExp(+all+, "+all+"); } catch (e) {}
+	try { var @regexp@ = new RegExp(+all+, +all+); } catch (e) {}
 %%%	try { var @regexp@ = new RegExp(+regexpLiteralArgs+); } catch (e) {}
 %%%	try { var @regexp@ = new RegExp(+regexpLiteralArgs+, "+regexpFlags+"); } catch (e) {}
 
