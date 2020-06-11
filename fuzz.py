@@ -1,6 +1,6 @@
 import subprocess, os, shutil, sys
 
-TIMEOUT = 15 # seconds
+TIMEOUT = 20 # seconds
 BINARY = "./hermes/build_asan_ubsan/bin/hermes" # CHANGE THIS
 DRRUN = "dynamorio/bin64/drrun" # DynamoRIO drrun path
 COV_EVERY_N = 100 # Gather coverage every COV_EVERY_N testcases
