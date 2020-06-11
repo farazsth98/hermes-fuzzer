@@ -132,6 +132,8 @@ objects :=
 	+strings+
 	+numberObjects+
 	+sets+
+	+weakmaps+
+	+weaksets+
 	!obj!
 
 objectsExceptNumber :=
@@ -150,6 +152,8 @@ objectsExceptNumber :=
 	+regexpObjects+
 	+strings+
 	+sets+
+	+weakmaps+
+	+weaksets+
 	!obj!
 
 objectsExpr :=
@@ -168,6 +172,8 @@ objectsExpr :=
 	+regexpObjectsExpr+
 	+numberObjectsExpr+
 	+setsExpr+
+	+weakmapsExpr+
+	+weaksetsExpr+
 	!obj!
 
 sets :=
@@ -177,6 +183,14 @@ sets :=
 setsExpr :=
 	var tempSet = new Set(+arrays+); tempSet
 	!set!
+
+weaksets :=
+	(new WeakSet(+WeakMapConstructorArguments+))
+	!weakset!
+
+weaksetsExpr :=
+	var tempWeakSet = new WeakSet(+WeakMapConstructorArguments+); tempWeakSet
+	!weakset!
 
 regexpObjects :=
 	new RegExp(+regexpStringArgs+)
@@ -218,6 +232,10 @@ maps :=
 	(new Map(+MapConstructorArguments+))
 	!map!
 
+mapsExpr :=
+	var tempMap = new Map(+MapConstructorArguments+); tempMap
+	!map!
+
 weakmaps :=
 	(new WeakMap(+WeakMapConstructorArguments+))
 	!weakmap!
@@ -225,10 +243,6 @@ weakmaps :=
 weakmapsExpr :=
 	var tempWeakMap = new WeakMap(+WeakMapConstructorArguments+); tempWeakMap
 	!weakmap!
-
-mapsExpr :=
-	var tempMap = new Map(+MapConstructorArguments+); tempMap
-	!map!
 
 numberObjects :=
 	(new Number(+numbers+))
@@ -1271,6 +1285,19 @@ weakMapSet :=
 
 %%% ##############################################################################################
 %%% ##############################################################################################
+%%% ######## WeakSet ########
+%%% ### https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet
+%%% ##############################################################################################
+
+WeakSetPrototypeMethods :=
+	+weakMapDelete+
+	+weakMapHas+
+	weakMapAdd(+initializableObjects+)
+	weakMapAdd(+objects+)
+	weakMapAdd(+arrays+)
+
+%%% ##############################################################################################
+%%% ##############################################################################################
 %%% ######## Object specific interactions ########
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -1509,6 +1536,20 @@ SetForLoopInteractions :=
 	!set![i].+arrayMethodsForLoop+
 	!set![i] = !set![i].+arrayMethodsForLoop+
 
+WeakSetInteractions :=
+	+weaksetsExpr+.+WeakSetPrototypeMethods+
+	+weaksetsExpr+.+allPrototypeMethods+
+	+weaksetsExpr+[+smallUnsigned+] = +weaksets+.+allPrototypeMethods+
+	+weaksetsExpr+[+smallUnsigned+].+allPrototypeMethods+
+	+weaksetsExpr+[+smallUnsigned+] = +weaksets+[+smallUnsigned+].+allPrototypeMethods+
+
+WeakSetForLoopInteractions :=
+	+weaksetsExpr+.+WeakSetPrototypeMethods+
+	!weakset!.+arrayMethodsForLoop+
+	!weakset![i] = !weakset!.+arrayMethodsForLoop+
+	!weakset![i].+arrayMethodsForLoop+
+	!weakset![i] = !weakset![i].+arrayMethodsForLoop+
+
 %%% ##############################################################################################
 %%% ##############################################################################################
 %%% ######## Random Array-like Operations ########
@@ -1575,6 +1616,7 @@ initializableObjects :=
 	!num!
 	!set!
 	!weakmap!
+	!weakset!
 
 allPrototypeMethods :=
 	+arrayMethods+
@@ -1586,6 +1628,7 @@ allPrototypeMethods :=
 	+ArrayBufferPrototypeMethods+
 	+SetPrototypeMethods+
 	+WeakMapMethods+
+	+WeakSetPrototypeMethods+
 
 forLoopInit :=
 	for (var i = 0; i < !arr!.length; i++) { !arr![i] = +all+; }
@@ -1598,6 +1641,7 @@ forLoopInit :=
 	for (var i = 0; i < !num!.length; i++) { !num![i] = +all+; }
 	for (var i = 0; i < !set!.length; i++) { !set![i] = +all+; }
 	for (var i = 0; i < !weakmap!.length; i++) { !weakmap![i] = +all+; }
+	for (var i = 0; i < !weakset!.length; i++) { !weakset![i] = +all+; }
 	for (var i = 0; i < +smallUnsigned+; i++) { +initializableObjects+[i] = +all+; }
 
 forInLoops :=
@@ -1638,6 +1682,7 @@ forLoopInteractions :=
 	try { +NumberForLoopInteractions+; } catch (e) {}
 	try { +SetForLoopInteractions+; } catch (e) {}
 	try { +WeakMapForLoopInteractions+; } catch (e) {}
+	try { +WeakSetForLoopInteractions+; } catch (e) {}
 
 interactions :=
 	+ArrayInteractions+;
@@ -1654,6 +1699,7 @@ interactions :=
 	+ArrayBufferInteractions+;
 	+SetInteractions+;
 	+WeakMapInteractions+;
+	+WeakSetInteractions+;
 
 wrapper :=
 	try { +interactions+ } catch (e) {}
@@ -1673,6 +1719,10 @@ str :=
 	try { var @str@ = +strings+; } catch (e) {}
 	try { var @str@ = String.fromCharCode(+charCodes+); } catch (e) {}
 	try { var @str@ = String.fromCodePoint(+codePoints+); } catch (e) {}
+	try { var @str@ = new String(+strings+); } catch (e) {}
+	try { var @str@ = new String(+all+); } catch (e) {}
+	try { var @str@ = String(+strings+); } catch (e) {}
+	try { var @str@ = String(+all+); } catch (e) {}
 
 obj :=
 	try { var @obj@ = {}; } catch (e) {}
@@ -1744,6 +1794,9 @@ set :=
 
 weakmap :=
 	try { var @weakmap@ = new WeakMap(+WeakMapConstructorArguments+); } catch (e) {}
+
+weakset :=
+	try { var @weakset@ = new WeakSet(+WeakMapConstructorArguments+); } catch (e) {}
 
 %%% ###########################################################################
 %%% ###########################################################################

@@ -1,9 +1,8 @@
 Add grammar for the following:
 
+* JSProxy
 * Make RegExp expressions semantically correct (kinda hard...)
 * String objects (ensure to cover UTF-16 strings)
-* WeakMap objects
-* WeakSet objects
 * eval
 * Date objects
 * Intl methods

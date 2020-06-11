@@ -32,6 +32,7 @@ def check_setup():
 
 def triage_crash(crash_msg, crash_file):
     unique_msg = b"" # A message unique to this crash
+    unique_crash = 0
 
     # Check for use after poisons
     if b"use-after-poison" in crash_msg:
@@ -52,13 +53,17 @@ def triage_crash(crash_msg, crash_file):
                 filename = f"uap_{str(unique_msg[1], 'utf-8')}.js"
                 print(f"Unique use-after-poison crash found! Saved as {filename}")
                 shutil.move(crash_file, f"./crashes/uaps/{filename}")
+                unique_crash = 1
             else:
                 print("Use-after-poison crash found but it wasn't unique.")
     # I will add in each type of crash as I find them
     else:
         filename = crash_file.split("/")[-1]
-        print("Found a crash that cannot be classified. Saved as {filename}")
+        print(f"Found a crash that cannot be classified. Saved as {filename}")
         shutil.move(crash_file, f"./crashes/{filename}")
+        unique_crash = 1
+
+    return unique_crash
 
 def main():
     check_setup()
@@ -92,7 +97,7 @@ def main():
     FNULL = open(os.devnull, 'w')
 
     # Used for test case number tracking and timeout percentage
-    num = timeouts = 0
+    num = timeouts = crashes = unique_crashes = 0
 
     for f in file_list:
         num += 1
@@ -103,7 +108,14 @@ def main():
 
         timeout_percent = float(timeouts) / float(num) * 100.0
         filename = f"./{sys.argv[1]}/{f}"
-        print(f"######## Test case {num}: {f} | Timeouts: {timeout_percent}% ########")
+
+        print(f"#####################################################################")
+        print(f" Test case {num}: {f}")
+        print(f" Timeout Percentage: {timeout_percent}%")
+        print(f" Crashes: {crashes}")
+        print(f" Unique crashes: {unique_crashes}")
+        print(f"#####################################################################")
+        print()
 
         try:
             # If your binary requires extra arguments, add them here after the filename
@@ -115,7 +127,7 @@ def main():
             if exit_code != 0: # We crashed
                 # Figure out if the crash is unique
                 output = child.stderr
-                triage_crash(output, filename)
+                unique_crashes += triage_crash(output, filename)
             else:
                 # We only want to gather coverage for non-crashing test cases
                 if not get_coverage:
