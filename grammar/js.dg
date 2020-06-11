@@ -28,7 +28,7 @@ integers :=
 	%range%(-9223372036854775808-92233782036854775807)
 
 smallUnsigned := 
-	%range%(0-64)
+	%range%(0-10)
 
 unsigned :=
 	%range%(0-18446744073709551615)
@@ -48,6 +48,7 @@ numbers :=
 	+integers+
 	+unsigned+
 	+floats+
+	+numberObjects+
 
 hexChars :=
 	%range%(0-9)
@@ -129,6 +130,8 @@ objects :=
 	+typedArrays+
 	+regexpObjects+
 	+strings+
+	+numberObjects+
+	+sets+
 	!obj!
 
 objectsExpr :=
@@ -144,7 +147,17 @@ objectsExpr :=
 	+mapsExpr+
 	+typedArraysExpr+
 	+regexpObjectsExpr+
+	+numberObjectsExpr+
+	+setsExpr+
 	!obj!
+
+sets :=
+	(new Set(+arrays+))
+	!set!
+
+setsExpr :=
+	var tempSet = new Set(+arrays+); tempSet
+	!set!
 
 regexpObjects :=
 	new RegExp(+regexpStringArgs+)
@@ -183,20 +196,29 @@ dataViewsExpr :=
 	!dv!
 
 maps :=
-	new Map(+MapConstructorArguments+)
+	(new Map(+MapConstructorArguments+))
 	!map!
 
 mapsExpr :=
 	var tempMap = new Map(+MapConstructorArguments+); tempMap
 	!map!
 
+numberObjects :=
+	(new Number(+numbers+))
+	(new Number(+all+))
+	!num!
+
+numberObjectsExpr :=
+	var tempNum = new Number(+numbers+); tempNum
+	var tempNum = new Number(+all+); tempNum
+	!num!
+
 arrayElements :=
-	+integers+
-	+unsigned+
-	+floats+
+	+numbers+
 	+objects+
 	+arraysCopy+
 	+typedArraysCopy+
+	+numberObjects+
 
 arrays :=
 	[]
@@ -205,6 +227,7 @@ arrays :=
 	[%repeat%(+floats+, ", ")]
 	[%repeat%(+objects+, ", ")]
 	[%repeat%(+arraysCopy+, ", ")]
+	[%repeat%(+arrayElements+, ", ")]
 	(new Array([%repeat%(+integers+, ", ")])) 
 	(new Array([%repeat%(+unsigned+, ", ")]))
 	(new Array([%repeat%(+floats+, ", ")]))
@@ -221,6 +244,7 @@ arraysExpr :=
 	[%repeat%(+floats+, ", ")]
 	[%repeat%(+objects+, ", ")]
 	[%repeat%(+arraysCopy+, ", ")]
+	[%repeat%(+arrayElements+, ", ")]
 	var tempArray = new Array([%repeat%(+integers+, ", ")]); tempArray
 	var tempArray = new Array([%repeat%(+unsigned+, ", ")]); tempArray
 	var tempArray = new Array([%repeat%(+floats+, ", ")]); tempArray
@@ -269,6 +293,10 @@ objectsCopy :=
 	+dataViews+
 	+maps+
 	+typedArrays+
+	+regexpObjects+
+	+strings+
+	+numberObjects+
+	+sets+
 	!obj!
 
 arraysCopy :=
@@ -322,6 +350,7 @@ all :=
 	+regexpObjects+
 	+others+
 	+MathConstants+
+	+NumberConstants+
 	!str!
 
 sizes :=
@@ -636,8 +665,8 @@ JSArrayInPlaceMethod :=
 
 concat :=
 	concat()
-	concat(!arr!)
-	concat(!obj!)
+	concat(+arrays+)
+	concat(+objects+)
 
 copyWithin :=
 	copyWithin(+twoIntArgs+)
@@ -717,7 +746,7 @@ values :=
 	
 %%% ##############################################################################################
 %%% ##############################################################################################
-%%% ######## ArrayBufffers ########
+%%% ######## ArrayBuffers ########
 %%% ### https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -845,8 +874,20 @@ seal :=
 	seal(+arrays+)
 
 setPrototypeOf :=
-	setPrototypeOf(+initializableObjects+, +objects+)
-	setPrototypeOf(+initializableObjects+, +arrays+)
+	setPrototypeOf(!arr!, +objects+); !arr!.+allPrototypeMethods+
+	setPrototypeOf(!t_arr!, +objects+); !t_arr!.+allPrototypeMethods+
+	setPrototypeOf(!dv!, +objects+); !dv!.+allPrototypeMethods+
+	setPrototypeOf(!obj!, +objects+); !obj!.+allPrototypeMethods+
+	setPrototypeOf(!buf!, +objects+); !buf!.+allPrototypeMethods+
+	setPrototypeOf(!map!, +objects+); !map!.+allPrototypeMethods+
+	setPrototypeOf(!regexp!, +objects+); !regexp!.+allPrototypeMethods+
+	setPrototypeOf(!arr!, +arrays+); !arr!.+allPrototypeMethods+
+	setPrototypeOf(!t_arr!, +arrays+); !t_arr!.+allPrototypeMethods+
+	setPrototypeOf(!dv!, +objects); !dv!.+allPrototypeMethods+
+	setPrototypeOf(!obj!, +arrays+); !obj!.+allPrototypeMethods+
+	setPrototypeOf(!buf!, +arrays+); !buf!.+allPrototypeMethods+
+	setPrototypeOf(!map!, +arrays+); !map!.+allPrototypeMethods+
+	setPrototypeOf(!regexp!, +arrays+); !regexp!.+allPrototypeMethods+
 
 ObjectPrototypeMethods :=
 	+hasOwnProperty+
@@ -891,11 +932,11 @@ defineSetter :=
 
 lookupGetter :=
 	__lookupGetter__("+propertyNames+")
-	__lookupGetter__("+numbers+")
+	__lookupGetter__(+numbers+)
 
 lookupSetter :=
 	__lookupSetter__("+propertyNames+")
-	__lookupSetter__("+numbers+")
+	__lookupSetter__(+numbers+)
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -1093,15 +1134,70 @@ regexpFlags :=
 
 %%% ##############################################################################################
 %%% ##############################################################################################
+%%% ######## Number ########
+%%% ### https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number
+%%% ##############################################################################################
+
+NumberConstants :=
+	Number.EPSILON
+	Number.MAX_SAFE_INTEGER
+	Number.MAX_VALUE
+	Number.MIN_SAFE_INTEGER
+	Number.MIN_VALUE
+	Number.NEGATIVE_INFINITY
+	Number.NaN
+	Number.POSITIVE_INFINITY
+
+NumberStaticMethods :=
+	Number.isFinite(+all+)
+	Number.isFinite(+numbers+)
+	Number.isInteger(+all+)
+	Number.isInteger(+numbers+)
+	Number.isNaN(+all+)
+	Number.isNaN(+numbers+)
+	Number.isSafeInteger(+all+)
+	Number.isSafeInteger(+numbers+)
+	Number.parseFloat(+all+)
+	Number.parseFloat(+numbers+)
+	Number.parseInt(+all+)
+	Number.parseInt(+numbers+)
+
+NumberPrototypeMethods :=
+	toExponential()
+	toExponential(+numbers+)
+	toExponential(+all+)
+	toFixed()
+	toFixed(+numbers+)
+	toFixed(+all+)
+	toPrecision()
+	toPrecision(+numbers+)
+	toPrecision(+all+)
+
+%%% ##############################################################################################
+%%% ##############################################################################################
+%%% ######## Set ########
+%%% ### https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
+%%% ##############################################################################################
+
+SetPrototypeMethods :=
+	size
+	add(+all+)
+	clear()
+	clear(+all+)
+	delete(+all+)
+	has(+all+)
+
+%%% ##############################################################################################
+%%% ##############################################################################################
 %%% ######## Object specific interactions ########
 %%% ##############################################################################################
 %%% ##############################################################################################
 
 DataViewInteractions :=
-	!dv!.+DataViewMethods+
-	!dv![i] = !dv!.+DataViewMethods+
-	!dv!.+arrayMethods+
-	!dv![i] = !dv!.+arrayMethods+
+	+dataViewsExpr+.+DataViewMethods+
+	+dataViewsExpr+[+smallUnsigned+] = +dataViews+.+DataViewMethods+
+	+dataViewsExpr+.+allPrototypeMethods+
+	+dataViewsExpr+[+smallUnsigned+] = +dataViews+.+allPrototypeMethods+
 
 DataViewForLoopInteractions :=
 	!dv!.+DataViewMethods+
@@ -1110,18 +1206,16 @@ DataViewForLoopInteractions :=
 	!dv![i] = !dv!.+arrayMethodsForLoop+
 
 ArrayInteractions :=
-	!arr!.+arrayMethods+
-	!arr![i] = !arr!.+arrayMethods+
-	!arr![i].+arrayMethods+
-	!arr![i] = !arr![i].+arrayMethods+
-	!obj!.+arrayMethods+
-	!obj![i] = !obj!.+arrayMethods+
-	!obj![i].+arrayMethods+
-	!obj![i] = !obj![i].+arrayMethods+
-	!regexp!.+arrayMethods+
-	!regexp![i] = !regexp!.+arrayMethods+
-	!regexp![i].+arrayMethods+
-	!regexp![i] = !regexp![i].+arrayMethods+
+	+arraysExpr+.+arrayMethods+
+	+arraysExpr+[+smallUnsigned+] = +arrays+.+arrayMethods+
+	+arraysExpr+[+smallUnsigned+].+arrayMethods+
+	+arraysExpr+[+smallUnsigned+] = tempArray[+smallUnsigned+].+arrayMethods+
+	+arraysExpr+[+smallUnsigned+] = +arrays+[+smallUnsigned+].+arrayMethods+
+	+arraysExpr+.+allPrototypeMethods+
+	+arraysExpr+[+smallUnsigned+] = +arrays+.+allPrototypeMethods+
+	+arraysExpr+[+smallUnsigned+].+allPrototypeMethods+
+	+arraysExpr+[+smallUnsigned+] = tempArray[+smallUnsigned+].+allPrototypeMethods+
+	+arraysExpr+[+smallUnsigned+] = +arrays+[+smallUnsigned+].+allPrototypeMethods+
 	Array.isArray(+all+)
 
 ArrayForLoopInteractions :=
@@ -1129,21 +1223,19 @@ ArrayForLoopInteractions :=
 	!arr![i] = !arr!.+arrayMethodsForLoop+
 	!arr![i].+arrayMethodsForLoop+
 	!arr![i] = !arr![i].+arrayMethodsForLoop+
-	!obj!.+arrayMethodsForLoop+
-	!obj![i] = !obj!.+arrayMethodsForLoop+
-	!obj![i].+arrayMethodsForLoop+
-	!obj![i] = !obj![i].+arrayMethodsForLoop+
-	!regexp!.+arrayMethodsForLoop+
-	!regexp![i] = !regexp!.+arrayMethodsForLoop+
-	!regexp![i].+arrayMethodsForLoop+
-	!regexp![i] = !regexp![i].+arrayMethodsForLoop+
 	Array.isArray(+all+)
 
 TypedArrayInteractions :=
 	+typedArraysExpr+.+TypedArrayMethods+
-	+typedArraysExpr+[i] = +typedArrays+.+TypedArrayMethods+
-	+typedArraysExpr+[i].+TypedArrayMethods+
-	+typedArraysExpr+[i] = +typedArrays+[i].+TypedArrayMethods+
+	+typedArraysExpr+[+smallUnsigned+] = +typedArrays+.+TypedArrayMethods+
+	+typedArraysExpr+[+smallUnsigned+].+TypedArrayMethods+
+	+typedArraysExpr+[+smallUnsigned+] = tempTypedArray[+smallUnsigned+].+TypedArrayMethods+
+	+typedArraysExpr+[+smallUnsigned+] = +typedArrays+[+smallUnsigned+].+TypedArrayMethods+
+	+typedArraysExpr+.+allPrototypeMethods+
+	+typedArraysExpr+[+smallUnsigned+] = +typedArrays+.+allPrototypeMethods+
+	+typedArraysExpr+[+smallUnsigned+].+allPrototypeMethods+
+	+typedArraysExpr+[+smallUnsigned+] = tempTypedArray[+smallUnsigned+].+allPrototypeMethods+
+	+typedArraysExpr+[+smallUnsigned+] = +typedArrays+[+smallUnsigned+].+allPrototypeMethods+
 
 TypedArrayForLoopInteractions :=
 	+typedArraysExpr+.+TypedArrayMethodsForLoop+
@@ -1152,8 +1244,20 @@ TypedArrayForLoopInteractions :=
 	+typedArraysExpr+[i] = +typedArrays+[i].+TypedArrayMethodsForLoop+
 
 ArrayBufferInteractions :=
+	+arrayBuffersExpr+.+ArrayBufferPrototypeMethods+
+	+arrayBuffersExpr+.+allPrototypeMethods+
+	ArrayBuffer.isView(+objects+)
+	ArrayBuffer.isView(+typedArrays+)
+	ArrayBuffer.isView(+dataViews+)
+	ArrayBuffer[Symbol.species]
+
+ArrayBufferForLoopInteractions :=
 	!buf!.+ArrayBufferPrototypeMethods+
 	+arrayBuffersExpr+.+ArrayBufferPrototypeMethods+
+	!buf!.+arrayMethodsForLoop+
+	!buf![i] = !buf!.+arrayMethodsForLoop+
+	!buf![i].+arrayMethodsForLoop+
+	!buf![i] = !buf![i].+arrayMethodsForLoop+
 	ArrayBuffer.isView(+objects+)
 	ArrayBuffer.isView(+typedArrays+)
 	ArrayBuffer.isView(+dataViews+)
@@ -1177,12 +1281,31 @@ ObjectInteractions :=
 	Object.+preventExtensions+
 	Object.+seal+
 	Object.+setPrototypeOf+
+	+objectsExpr+.+allPrototypeMethods+
+	+objectsExpr+[+smallUnsigned+] = +objects+.+allPrototypeMethods+
+	+objectsExpr+[+smallUnsigned+].+allPrototypeMethods+
+	+objectsExpr+[+smallUnsigned+] = +objects+[+smallUnsigned+].+allPrototypeMethods+
 	+initializableObjects+.+allPrototypeMethods+
 	+objectsExpr+.+allPrototypeMethods+
+
+ObjectForLoopInteractions :=
+	!obj!.+arrayMethodsForLoop+
+	!obj![i] = !obj!.+arrayMethodsForLoop+
+	!obj![i].+arrayMethodsForLoop+
+	!obj![i] = !obj![i].+arrayMethodsForLoop+
 
 MapInteractions :=
 	+mapsExpr+.+MapMethods+
 	+mapsExpr+.+MapAccessors+
+	+mapsExpr+.+allPrototypeMethods+
+
+MapForLoopInteractions :=
+	+mapsExpr+.+MapMethods+
+	+mapsExpr+.+MapAccessors+
+	!map!.+arrayMethodsForLoop+
+	!map![i] = !map!.+arrayMethodsForLoop+
+	!map![i].+arrayMethodsForLoop+
+	!map![i] = !map![i].+arrayMethodsForLoop+
 
 ReflectInteractions :=
 %%%	Reflect.apply
@@ -1245,7 +1368,53 @@ RegExpInteractions :=
 	+regexpObjectsExpr+.+RegExpPrototypeVariables+
 	+regexpObjectsExpr+.+RegExpPrototypeMethods+
 	+regexpObjectsExpr++RegExpSymbolMethods+
+	+regexpObjectsExpr+.+allPrototypeMethods+
+	+regexpObjectsExpr+[+smallUnsigned+] = +regexpObjects+.+allPrototypeMethods+
+	+regexpObjectsExpr+[+smallUnsigned+].+allPrototypeMethods+
+	+regexpObjectsExpr+[+smallUnsigned+] = +regexpObjects+[+smallUnsigned+].+allPrototypeMethods+
 	+RegExpStaticVariables+
+
+RegExpForLoopInteractions :=
+	+regexpObjectsExpr+.+RegExpPrototypeVariables+
+	+regexpObjectsExpr+.+RegExpPrototypeMethods+
+	+regexpObjectsExpr++RegExpSymbolMethods+
+	!regexp!.+arrayMethodsForLoop+
+	!regexp![i] = !regexp!.+arrayMethodsForLoop+
+	!regexp![i].+arrayMethodsForLoop+
+	!regexp![i] = !regexp![i].+arrayMethodsForLoop+
+	+RegExpStaticVariables+
+
+NumberInteractions :=
+	+NumberConstants+
+	+NumberStaticMethods+
+	+numberObjectsExpr+.+NumberPrototypeMethods+
+	+numberObjectsExpr+.+allPrototypeMethods+
+	+numberObjectsExpr+[+smallUnsigned+] = +numberObjects+.+allPrototypeMethods+
+	+numberObjectsExpr+[+smallUnsigned+].+allPrototypeMethods+
+	+numberObjectsExpr+[+smallUnsigned+] = +numberObjects+[+smallUnsigned+].+allPrototypeMethods+
+
+NumberForLoopInteractions :=
+	+NumberConstants+
+	+NumberStaticMethods+
+	+numberObjectsExpr+.+NumberPrototypeMethods+
+	!num!.+arrayMethodsForLoop+
+	!num![i] = !num!.+arrayMethodsForLoop+
+	!num![i].+arrayMethodsForLoop+
+	!num![i] = !num![i].+arrayMethodsForLoop+
+
+SetInteractions :=
+	+setsExpr+.+SetPrototypeMethods+
+	+setsExpr+.+allPrototypeMethods+
+	+setsExpr+[+smallUnsigned+] = +sets+.+allPrototypeMethods+
+	+setsExpr+[+smallUnsigned+].+allPrototypeMethods+
+	+setsExpr+[+smallUnsigned+] = +sets+[+smallUnsigned+].+allPrototypeMethods+
+
+SetForLoopInteractions :=
+	+setsExpr+.+SetPrototypeMethods+
+	!set!.+arrayMethodsForLoop+
+	!set![i] = !set!.+arrayMethodsForLoop+
+	!set![i].+arrayMethodsForLoop+
+	!set![i] = !set![i].+arrayMethodsForLoop+
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -1257,18 +1426,9 @@ interestingIndices :=
 	+smallUnsigned+
 
 arrayLikeObjects :=
-	!arr!
-	!t_arr!
-	!obj!
-	!buf!
-	!dv!
-	!map!
-	+arraysExpr+
-	+typedArraysExpr+
+	+initializableObjects+
 	+objectsExpr+
-	+mapsExpr+
-	+dataViewsExpr+
-	+arrayBuffersExpr+
+	+arraysExpr+
 
 randomIndexInsertions :=
 	+arrayLikeObjects+[+interestingIndices+] = +all+
@@ -1276,11 +1436,48 @@ randomIndexInsertions :=
 interestingLengths :=
 	+smallNumbers+
 	+strings+
-	+objects+
+	{}
+	{ %repeat%(+props+, ", ") }
+	(new Object(null))
+	(new Object(undefined))
+	(new Object(+objectsCopy+))
+	(Object.create(+objectsCopy+, { %repeat%(+props+, ", ") }))
+	(Object.create(+objectsCopy+, { %repeat%("+propertyNames+": +descriptor+, ", ") }))
+	+arrayBuffers+
+	+dataViews+
+	+maps+
+	+typedArrays+
+	+regexpObjects+
+	+strings+
+	+sets+
+	!obj!
 	+arrays+
 
 randomLengthChanges :=
 	+arrayLikeObjects+.length = +interestingLengths+
+
+%%% ##############################################################################################
+%%% ##############################################################################################
+%%% ######## Random Object Operations ########
+%%% ##############################################################################################
+%%% ##############################################################################################
+%%% https://www.ecma-international.org/ecma-262/#sec-well-known-symbols
+interestingProperties :=
+%%%	Symbol.asyncIterator
+	Symbol.hasInstance
+	Symbol.isConcatSpreadable
+	Symbol.iterator
+	Symbol.match
+	Symbol.replace
+	Symbol.search
+	Symbol.split
+	Symbol.toPrimitive
+	Symbol.toStringTag
+%%%	Symbol.unscopables
+
+randomPropertySets :=
+	+initializableObjects+["+propertyNames+"] = +all+
+	+initializableObjects+[+interestingProperties+] = +all+
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -1296,6 +1493,8 @@ initializableObjects :=
 	!buf!
 	!map!
 	!regexp!
+	!num!
+	!set!
 
 allPrototypeMethods :=
 	+arrayMethods+
@@ -1305,6 +1504,7 @@ allPrototypeMethods :=
 	+RegExpPrototypeVariables+
 	+ObjectPrototypeMethods+
 	+ArrayBufferPrototypeMethods+
+	+SetPrototypeMethods+
 
 forLoopInit :=
 	for (var i = 0; i < !arr!.length; i++) { !arr![i] = +all+; }
@@ -1314,6 +1514,8 @@ forLoopInit :=
 	for (var i = 0; i < !buf!.length; i++) { !buf![i] = +all+; }
 	for (var i = 0; i < !map!.length; i++) { !map![i] = +all+; }
 	for (var i = 0; i < !regexp!.length; i++) { !regexp![i] = +all+; }
+	for (var i = 0; i < !num!.length; i++) { !num![i] = +all+; }
+	for (var i = 0; i < !set!.length; i++) { !set![i] = +all+; }
 	for (var i = 0; i < +smallUnsigned+; i++) { +initializableObjects+[i] = +all+; }
 
 forInLoops :=
@@ -1344,13 +1546,15 @@ forLoops :=
 forLoopInteractions :=
 	try { +ArrayForLoopInteractions+; } catch (e) {}
 	try { +DataViewForLoopInteractions+; } catch (e) {}
-	try { +ObjectInteractions+; } catch (e) {}
+	try { +ObjectForLoopInteractions+; } catch (e) {}
 	try { +ReflectInteractions+; } catch (e) {}
 	try { +TypedArrayForLoopInteractions+; } catch (e) {}
-	try { +MapInteractions+; } catch (e) {}
+	try { +MapForLoopInteractions+; } catch (e) {}
 	try { +MathInteractions+; } catch (e) {}
-	try { +RegExpInteractions+; } catch (e) {}
-	try { +ArrayBufferInteractions+; } catch (e) {}
+	try { +RegExpForLoopInteractions+; } catch (e) {}
+	try { +ArrayBufferForLoopInteractions+; } catch (e) {}
+	try { +NumberForLoopInteractions+; } catch (e) {}
+	try { +SetForLoopInteractions+; } catch (e) {}
 
 interactions :=
 	+ArrayInteractions+;
@@ -1361,9 +1565,11 @@ interactions :=
 	+MapInteractions+;
 	+randomIndexInsertions+;
 	+randomLengthChanges+;
+	+randomPropertySets+;
 	+MathInteractions+;
 	+RegExpInteractions+;
-	+ArrayBufferInteractions+; 
+	+ArrayBufferInteractions+;
+	+SetInteractions+;
 
 wrapper :=
 	try { +interactions+ } catch (e) {}
@@ -1444,6 +1650,13 @@ regexp :=
 	try { var @regexp@ = new RegExp(+all+, +all+); } catch (e) {}
 %%%	try { var @regexp@ = new RegExp(+regexpLiteralArgs+); } catch (e) {}
 %%%	try { var @regexp@ = new RegExp(+regexpLiteralArgs+, "+regexpFlags+"); } catch (e) {}
+
+num :=
+	try { var @num@ = new Number(+numbers+); } catch (e) {}
+
+set :=
+	try { var @set@ = new Set(+arrays+); } catch (e) {}
+	try { var @set@ = new Set(+objects+); } catch (e) {}
 
 %%% ###########################################################################
 %%% ###########################################################################
