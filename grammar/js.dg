@@ -134,6 +134,24 @@ objects :=
 	+sets+
 	!obj!
 
+objectsExceptNumber :=
+	{}
+	{ %repeat%(+props+, ", ") }
+	(new Object(null))
+	(new Object(undefined))
+	(new Object(+objectsCopy+))
+	(Object.create(+objectsCopy+, { %repeat%(+props+, ", ") }))
+	(Object.create(+objectsCopy+, { %repeat%("+propertyNames+": +descriptor+, ", ") }))
+	+arrayBuffers+
+	+dataViews+
+	+maps+
+	+weakmaps+
+	+typedArrays+
+	+regexpObjects+
+	+strings+
+	+sets+
+	!obj!
+
 objectsExpr :=
 	var tempObj = {}; tempObj
 	var tempObj = { %repeat%(+props+, ", ") }; tempObj
@@ -145,6 +163,7 @@ objectsExpr :=
 	+arrayBuffersExpr+
 	+dataViewsExpr+
 	+mapsExpr+
+	+weakmapsExpr+
 	+typedArraysExpr+
 	+regexpObjectsExpr+
 	+numberObjectsExpr+
@@ -198,6 +217,14 @@ dataViewsExpr :=
 maps :=
 	(new Map(+MapConstructorArguments+))
 	!map!
+
+weakmaps :=
+	(new WeakMap(+WeakMapConstructorArguments+))
+	!weakmap!
+
+weakmapsExpr :=
+	var tempWeakMap = new WeakMap(+WeakMapConstructorArguments+); tempWeakMap
+	!weakmap!
 
 mapsExpr :=
 	var tempMap = new Map(+MapConstructorArguments+); tempMap
@@ -988,6 +1015,8 @@ MapConstructorArguments :=
 	[%repeat%(["+propertyNames+", +all+], ", ")]
 	[%repeat%([+smallUnsigned+, +all+], ", ")]
 	[%repeat%([+unsigned+, +all+], ", ")]
+	[%repeat%([+objects+, +all+], ", ")]
+	[%repeat%([+arrays+, +all+], ", ")]
 
 MapMethods :=
 	+clear+
@@ -1008,6 +1037,10 @@ clear :=
 
 mapDelete :=
 	delete("+propertyNames+")
+	delete(+smallUnsigned+)
+	delete(+unsigned+)
+	delete(+objects+)
+	delete(+arrays+)
 
 mapForEach :=
 	forEach()
@@ -1017,12 +1050,24 @@ mapForEach :=
 
 mapGet :=
 	get("+propertyNames+")
+	get(+smallUnsigned+)
+	get(+unsigned+)
+	get(+objects+)
+	get(+arrays+)
 
 mapHas :=
 	has("+propertyNames+")
+	has(+smallUnsigned+)
+	has(+unsigned+)
+	has(+objects+)
+	has(+arrays+)
 
 mapSet :=
 	set("+propertyNames+", +all+)
+	set(+smallUnsigned+, +all+)
+	set(+unsigned+, +all+)
+	set(+objects+, +all+)
+	set(+arrays+, +all+)
 
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -1189,6 +1234,43 @@ SetPrototypeMethods :=
 
 %%% ##############################################################################################
 %%% ##############################################################################################
+%%% ######## WeakMap ########
+%%% ### https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap
+%%% ##############################################################################################
+
+WeakMapConstructorArguments :=
+	[%repeat%([+initializableObjects+, +all+], ", ")]
+	[%repeat%([+objects+, +all+], ", ")]
+	[%repeat%([+arrays+, +all+], ", ")]
+
+WeakMapMethods :=
+	+weakMapDelete+
+	+weakMapGet+
+	+weakMapHas+
+	+weakMapSet+
+
+weakMapDelete :=
+	delete(+initializableObjects+)
+	delete(+objects+)
+	delete(+arrays+)
+
+weakMapGet :=
+	get(+initializableObjects+)
+	get(+objects+)
+	get(+arrays+)
+
+weakMapHas :=
+	has(+initializableObjects+)
+	has(+objects+)
+	has(+arrays+)
+
+weakMapSet :=
+	set(+initializableObjects+, +all+)
+	set(+objects+, +all+)
+	set(+arrays+, +all+)
+
+%%% ##############################################################################################
+%%% ##############################################################################################
 %%% ######## Object specific interactions ########
 %%% ##############################################################################################
 %%% ##############################################################################################
@@ -1306,6 +1388,17 @@ MapForLoopInteractions :=
 	!map![i] = !map!.+arrayMethodsForLoop+
 	!map![i].+arrayMethodsForLoop+
 	!map![i] = !map![i].+arrayMethodsForLoop+
+
+WeakMapInteractions :=
+	+weakmapsExpr+.+WeakMapMethods+
+	+weakmapsExpr+.+allPrototypeMethods+
+
+WeakMapForLoopInteractions :=
+	+weakmapsExpr+.+MapMethods+
+	!weakmap!.+arrayMethodsForLoop+
+	!weakmap![i] = !map!.+arrayMethodsForLoop+
+	!weakmap![i].+arrayMethodsForLoop+
+	!weakmap![i] = !map![i].+arrayMethodsForLoop+
 
 ReflectInteractions :=
 %%%	Reflect.apply
@@ -1436,21 +1529,7 @@ randomIndexInsertions :=
 interestingLengths :=
 	+smallNumbers+
 	+strings+
-	{}
-	{ %repeat%(+props+, ", ") }
-	(new Object(null))
-	(new Object(undefined))
-	(new Object(+objectsCopy+))
-	(Object.create(+objectsCopy+, { %repeat%(+props+, ", ") }))
-	(Object.create(+objectsCopy+, { %repeat%("+propertyNames+": +descriptor+, ", ") }))
-	+arrayBuffers+
-	+dataViews+
-	+maps+
-	+typedArrays+
-	+regexpObjects+
-	+strings+
-	+sets+
-	!obj!
+	+objectsExceptNumber+
 	+arrays+
 
 randomLengthChanges :=
@@ -1495,6 +1574,7 @@ initializableObjects :=
 	!regexp!
 	!num!
 	!set!
+	!weakmap!
 
 allPrototypeMethods :=
 	+arrayMethods+
@@ -1505,6 +1585,7 @@ allPrototypeMethods :=
 	+ObjectPrototypeMethods+
 	+ArrayBufferPrototypeMethods+
 	+SetPrototypeMethods+
+	+WeakMapMethods+
 
 forLoopInit :=
 	for (var i = 0; i < !arr!.length; i++) { !arr![i] = +all+; }
@@ -1516,6 +1597,7 @@ forLoopInit :=
 	for (var i = 0; i < !regexp!.length; i++) { !regexp![i] = +all+; }
 	for (var i = 0; i < !num!.length; i++) { !num![i] = +all+; }
 	for (var i = 0; i < !set!.length; i++) { !set![i] = +all+; }
+	for (var i = 0; i < !weakmap!.length; i++) { !weakmap![i] = +all+; }
 	for (var i = 0; i < +smallUnsigned+; i++) { +initializableObjects+[i] = +all+; }
 
 forInLoops :=
@@ -1555,6 +1637,7 @@ forLoopInteractions :=
 	try { +ArrayBufferForLoopInteractions+; } catch (e) {}
 	try { +NumberForLoopInteractions+; } catch (e) {}
 	try { +SetForLoopInteractions+; } catch (e) {}
+	try { +WeakMapForLoopInteractions+; } catch (e) {}
 
 interactions :=
 	+ArrayInteractions+;
@@ -1570,6 +1653,7 @@ interactions :=
 	+RegExpInteractions+;
 	+ArrayBufferInteractions+;
 	+SetInteractions+;
+	+WeakMapInteractions+;
 
 wrapper :=
 	try { +interactions+ } catch (e) {}
@@ -1657,6 +1741,9 @@ num :=
 set :=
 	try { var @set@ = new Set(+arrays+); } catch (e) {}
 	try { var @set@ = new Set(+objects+); } catch (e) {}
+
+weakmap :=
+	try { var @weakmap@ = new WeakMap(+WeakMapConstructorArguments+); } catch (e) {}
 
 %%% ###########################################################################
 %%% ###########################################################################
