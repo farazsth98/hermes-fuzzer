@@ -3,8 +3,8 @@
 %%% ## Description: Grammar for fuzzing JavaScript engines
 
 %const% MAX_REPEAT_POWER := 3
-%const% VARIANCE_MIN := 150
-%const% VARIANCE_MAX := 250
+%const% VARIANCE_MIN := 250
+%const% VARIANCE_MAX := 350
 %const% VARIABLE_MIN := 1
 %const% VARIABLE_MAX := 1
 
