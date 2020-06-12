@@ -90,11 +90,11 @@ stringChars :=
 	\u+hexChars++hexChars++hexChars++hexChars+
 
 regexpStringArgs :=
-	+strings+
+	"%repeat%(+regexpChars+)"
 
-regexpLiteralArgs :=
-	/%repeat%(+regexpLiteralChars+)/
-	/%repeat%(+regexpLiteralChars+)/+regexpFlags+
+%%%regexpLiteralArgs :=
+%%%	/%repeat%(+regexpLiteralChars+)/
+%%%	/%repeat%(+regexpLiteralChars+)/+regexpFlags+
 
 strings :=
 	"%repeat%(+stringChars+)"
@@ -1162,16 +1162,13 @@ RegExpStaticVariables :=
 	RegExp.leftContext
 	RegExp.rightContext
 
-regexpLiteralChars :=
+regexpChars :=
 	%range%(a-z)
-	\'
-	\"
 	.
-	?
+	+regexpCharsSafe+?
 	=
-	+
-	|
-	\\
+	+regexpCharsSafe++
+	+regexpCharsSafe+|+regexpCharsSafe+
 	!
 	@
 	#
@@ -1181,6 +1178,16 @@ regexpLiteralChars :=
 	&
 	%range%(A-Z)
 	%range%(0-9)
+
+regexpCharsSafe :=
+	%range%(a-z)
+	%range%(A-Z)
+	%range%(0-9)
+	=
+	@
+	#
+	%
+	&
 
 regexpFlags :=
 	g

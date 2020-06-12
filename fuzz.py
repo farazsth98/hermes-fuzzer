@@ -3,7 +3,7 @@ import subprocess, os, shutil, sys
 TIMEOUT = 20 # seconds
 BINARY = "./hermes/build_asan_ubsan/bin/hermes" # CHANGE THIS
 DRRUN = "dynamorio/bin64/drrun" # DynamoRIO drrun path
-COV_EVERY_N = 100 # Gather coverage every COV_EVERY_N testcases
+COV_EVERY_N = 25 # Gather coverage every COV_EVERY_N testcases
 
 def check_setup():
     if not os.path.isdir("crashes"):
@@ -51,15 +51,11 @@ def triage_crash(crash_msg, crash_file):
             if call_stack_msg not in call_stacks:
                 f.write(call_stack_msg + b"\n")
                 filename = f"uap_{str(unique_msg[1], 'utf-8')}.js"
-                print(f"Unique use-after-poison crash found! Saved as {filename}")
                 shutil.move(crash_file, f"./crashes/uaps/{filename}")
                 unique_crash = 1
-            else:
-                print("Use-after-poison crash found but it wasn't unique.")
     # I will add in each type of crash as I find them
     else:
         filename = crash_file.split("/")[-1]
-        print(f"Found a crash that cannot be classified. Saved as {filename}")
         shutil.move(crash_file, f"./crashes/{filename}")
         unique_crash = 1
 
@@ -128,6 +124,7 @@ def main():
                 # Figure out if the crash is unique
                 output = child.stderr
                 unique_crashes += triage_crash(output, filename)
+                crashes += 1
             else:
                 # We only want to gather coverage for non-crashing test cases
                 if not get_coverage:
