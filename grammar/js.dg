@@ -1304,7 +1304,7 @@ WeakSetPrototypeMethods :=
 
 %%% ##############################################################################################
 %%% ##############################################################################################
-%%% ######## Object specific interactions ########
+%%% ######## Interactions ########
 %%% ##############################################################################################
 %%% ##############################################################################################
 
@@ -1556,6 +1556,9 @@ WeakSetForLoopInteractions :=
 	!weakset![i].+arrayMethodsForLoop+
 	!weakset![i] = !weakset![i].+arrayMethodsForLoop+
 
+NormalInteractions :=
+	gc()
+
 %%% ##############################################################################################
 %%% ##############################################################################################
 %%% ######## Random Array-like Operations ########
@@ -1689,6 +1692,7 @@ forLoopInteractions :=
 	try { +SetForLoopInteractions+; } catch (e) {}
 	try { +WeakMapForLoopInteractions+; } catch (e) {}
 	try { +WeakSetForLoopInteractions+; } catch (e) {}
+	try { +NormalInteractions+; } catch (e) {}
 
 interactions :=
 	+ArrayInteractions+;
@@ -1706,6 +1710,7 @@ interactions :=
 	+SetInteractions+;
 	+WeakMapInteractions+;
 	+WeakSetInteractions+;
+	+NormalInteractions+;
 
 wrapper :=
 	try { +interactions+ } catch (e) {}

@@ -3,7 +3,7 @@ import subprocess, os, shutil, sys
 TIMEOUT = 20 # seconds
 BINARY = "./hermes/build_asan_ubsan/bin/hermes" # CHANGE THIS
 DRRUN = "dynamorio/bin64/drrun" # DynamoRIO drrun path
-COV_EVERY_N = 25 # Gather coverage every COV_EVERY_N testcases
+COV_EVERY_N = 100 # Gather coverage every COV_EVERY_N testcases
 
 def check_setup():
     if not os.path.isdir("crashes"):
