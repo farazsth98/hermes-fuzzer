@@ -1,7 +1,7 @@
 import subprocess, os, shutil, sys
 
 TIMEOUT = 20 # seconds
-BINARY = "./hermes/build_asan_ubsan/bin/hermes" # CHANGE THIS
+BINARY = "./d8-68644/d8" # CHANGE THIS
 DRRUN = "dynamorio/bin64/drrun" # DynamoRIO drrun path
 COV_EVERY_N = 100 # Gather coverage every COV_EVERY_N testcases
 
@@ -98,9 +98,11 @@ def main():
     for f in file_list:
         num += 1
         
+        """ No coverage to be gathered with d8
         # Every 100 test cases, we want to gather coverage
         if (num % COV_EVERY_N == 0):
             get_coverage = True
+        """
 
         timeout_percent = float(timeouts) / float(num) * 100.0
         filename = f"./{sys.argv[1]}/{f}"
@@ -115,9 +117,14 @@ def main():
 
         try:
             # If your binary requires extra arguments, add them here after the filename
-            child = subprocess.run([BINARY, filename, "-Xhermes-internal-test-methods", "-jit",
-                "-jit-crash-on-error", "-Xes6-proxy", "-Xes6-symbol"], timeout=TIMEOUT, env=env, 
-                stdout=FNULL, stderr=subprocess.PIPE)
+            child = subprocess.run([BINARY, filename, "--experimental-wasm-eh", 
+                "--experimental-wasm-simd", "--experimental-wasm-return-call", 
+                "--experimental-wasm-compilation-hints", "--experimental-wasm-gc", 
+                "--experimental-wasm-typed-funcref", "--experimental-wasm-reftypes", 
+                "--experimental-wasm-threads", "--experimental-wasm-type-reflection", 
+                "--experimental-wasm-bigint", "--experimental-wasm-bulk-memory", 
+                "--experimental-wasm-mv"], timeout=TIMEOUT, env=env, stdout=FNULL, 
+                stderr=subprocess.PIPE)
             exit_code = child.returncode
 
             if exit_code != 0: # We crashed
@@ -130,9 +137,13 @@ def main():
                 if not get_coverage:
                     continue
                 
-                subprocess.run([DRRUN, "-t", "drcov", "-logdir", "coverage", "--", BINARY, "-jit",
-                    "-jit-crash-on-error", "-Xhermes-internal-test-methods", "-Xes6-proxy", 
-                    "-Xes6-symbol", filename])
+                subprocess.run([DRRUN, "-t", "drcov", "-logdir", "coverage", "--", BINARY,
+                    "--experimental-wasm-eh", "--experimental-wasm-simd", 
+                    "--experimental-wasm-return-call", "--experimental-wasm-compilation-hints", 
+                    "--experimental-wasm-gc", "--experimental-wasm-typed-funcref", 
+                    "--experimental-wasm-reftypes", "--experimental-wasm-threads", 
+                    "--experimental-wasm-type-reflection", "--experimental-wasm-bigint", 
+                    "--experimental-wasm-bulk-memory", "--experimental-wasm-mv", filename])
                 get_coverage = False
 
         except subprocess.TimeoutExpired:
